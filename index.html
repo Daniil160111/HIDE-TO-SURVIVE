@@ -117,11 +117,6 @@
             min-width: 100px;
         }
 
-        .custom-dialog button:hover {
-            background: #b30000;
-            transform: scale(1.05);
-        }
-
         @keyframes dialogAppear {
             from { opacity: 0; transform: translate(-50%, -40%); }
             to { opacity: 1; transform: translate(-50%, -50%); }
@@ -139,7 +134,7 @@
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            transition: background 0.5s ease;
+            transition: background-image 0.5s ease;
             z-index: 10;
         }
 
@@ -147,23 +142,43 @@
             display: flex;
         }
 
-        .screen.dark-overlay::after {
-            content: '';
+        /* Затемнение */
+        .screen-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            transition: opacity 0.5s;
+            background: rgba(0, 0, 0, 0);
+            transition: background 0.5s ease;
             pointer-events: none;
-            z-index: 1;
+            z-index: 2;
+        }
+
+        .screen-overlay.dark {
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        /* Блокировка кнопок во время перехода */
+        .transition-lock {
+            pointer-events: none;
+        }
+
+        .transition-lock .menu-btn,
+        .transition-lock .room-item,
+        .transition-lock .create-room,
+        .transition-lock .back-btn,
+        .transition-lock .ready-btn,
+        .transition-lock .delete-room-btn,
+        .transition-lock button {
+            pointer-events: none !important;
         }
 
         #auth-screen {
             justify-content: center;
             align-items: center;
-            background-image: url('https://raw.githubusercontent.com/Daniil160111/HIDE-TO-SURVIVE/refs/heads/main/InShot_20260320_082743991.jpg');
+            background-size: cover;
+            background-position: center;
         }
 
         .auth-card {
@@ -247,7 +262,8 @@
 
         /* Главное меню */
         #menu-screen {
-            background-image: url('https://raw.githubusercontent.com/Daniil160111/HIDE-TO-SURVIVE/refs/heads/main/InShot_20260320_082743991.jpg');
+            background-size: cover;
+            background-position: center;
         }
 
         .menu-header {
@@ -258,7 +274,7 @@
             background: rgba(0,0,0,0.6);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255,0,0,0.3);
-            z-index: 2;
+            z-index: 3;
         }
 
         .menu-header .nick {
@@ -287,7 +303,7 @@
             justify-content: center;
             align-items: center;
             gap: clamp(10px, 3vw, 20px);
-            z-index: 2;
+            z-index: 3;
             padding: 20px;
         }
 
@@ -334,14 +350,15 @@
 
         /* Список комнат */
         #rooms-screen {
-            background-image: url('https://raw.githubusercontent.com/Daniil160111/HIDE-TO-SURVIVE/refs/heads/main/InShot_20260320_082743991.jpg');
+            background-size: cover;
+            background-position: center;
         }
 
         #rooms-screen .rooms-container {
             flex: 1;
             padding: clamp(10px, 3vw, 20px);
             overflow-y: auto;
-            z-index: 2;
+            z-index: 3;
         }
 
         .room-item {
@@ -394,7 +411,7 @@
             gap: clamp(8px, 2vw, 15px);
             background: #2a0000;
             border-bottom: 2px solid #ff4d4d;
-            z-index: 2;
+            z-index: 3;
             flex-wrap: wrap;
         }
 
@@ -414,7 +431,7 @@
             padding: clamp(10px, 3vw, 15px);
             font-size: clamp(18px, 5vw, 24px);
             color: #ffaaaa;
-            z-index: 2;
+            z-index: 3;
         }
 
         .players-grid {
@@ -425,7 +442,7 @@
             gap: clamp(10px, 3vw, 20px);
             align-content: flex-start;
             justify-content: center;
-            z-index: 2;
+            z-index: 3;
         }
 
         .player-slot {
@@ -611,7 +628,8 @@
 
         /* Настройки */
         #settings-screen {
-            background-image: url('https://raw.githubusercontent.com/Daniil160111/HIDE-TO-SURVIVE/refs/heads/main/InShot_20260320_082743991.jpg');
+            background-size: cover;
+            background-position: center;
         }
 
         .settings-item {
@@ -638,23 +656,6 @@
             cursor: pointer;
             font-size: clamp(14px, 4vw, 16px);
         }
-
-        /* Затемнение */
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.4);
-            transition: opacity 0.5s;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .overlay.hidden {
-            opacity: 0;
-        }
     </style>
 </head>
 <body>
@@ -670,8 +671,8 @@
         <div class="custom-dialog-buttons" id="dialog-buttons"></div>
     </div>
 
-    <!-- Затемнение -->
-    <div id="overlay" class="overlay hidden"></div>
+    <!-- Затемнение для экранов -->
+    <div id="screen-overlay" class="screen-overlay"></div>
 
     <audio id="bg-music" loop preload="auto"></audio>
     <audio id="room-music" loop preload="auto"></audio>
@@ -679,7 +680,7 @@
 
     <div id="app">
         <!-- Экран авторизации -->
-        <div id="auth-screen" class="screen active">
+        <div id="auth-screen" class="screen active" style="background-image: url('https://raw.githubusercontent.com/Daniil160111/HIDE-TO-SURVIVE/refs/heads/main/InShot_20260320_105810616.jpg');">
             <div class="auth-card">
                 <h1>HIDE TO SURVIVE</h1>
                 <div id="auth-step-1" class="auth-step active">
@@ -696,7 +697,7 @@
         </div>
 
         <!-- Главное меню -->
-        <div id="menu-screen" class="screen">
+        <div id="menu-screen" class="screen" style="background-image: url('https://raw.githubusercontent.com/Daniil160111/HIDE-TO-SURVIVE/refs/heads/main/InShot_20260320_105810616.jpg');">
             <div class="menu-header">
                 <span class="nick" id="menu-nickname">Загрузка...</span>
                 <span class="coins" id="menu-coins">💰 0</span>
@@ -709,7 +710,7 @@
         </div>
 
         <!-- Список комнат -->
-        <div id="rooms-screen" class="screen">
+        <div id="rooms-screen" class="screen" style="background-image: url('https://raw.githubusercontent.com/Daniil160111/HIDE-TO-SURVIVE/refs/heads/main/InShot_20260320_105704810.jpg');">
             <div class="back-btn" onclick="hideRooms()">← Назад</div>
             <div style="padding: 80px 20px 20px;">
                 <div class="create-room" onclick="createRoom()">
@@ -761,7 +762,7 @@
         </div>
 
         <!-- Настройки -->
-        <div id="settings-screen" class="screen">
+        <div id="settings-screen" class="screen" style="background-image: url('https://raw.githubusercontent.com/Daniil160111/HIDE-TO-SURVIVE/refs/heads/main/InShot_20260320_105704810.jpg');">
             <div class="back-btn" onclick="hideSettings()">← Назад</div>
             <div style="padding: 80px 20px 20px;">
                 <div class="settings-item">
@@ -813,22 +814,43 @@
         let joystickActive = false;
         let players = {};
         let threeScene, camera, renderer, playerSprites;
+        let isTransitioning = false;
 
         // Аудио
         let bgMusic = document.getElementById('bg-music');
         let roomMusic = document.getElementById('room-music');
         let buttonSound = document.getElementById('button-sound');
-        let overlay = document.getElementById('overlay');
-        let isTransitioning = false;
+        let overlay = document.getElementById('screen-overlay');
 
-        // Ориентация
+        // Ориентация и фон
+        let currentOrientation = 'portrait';
+
+        function updateBackgrounds() {
+            const isPortrait = window.innerHeight > window.innerWidth;
+            if (isPortrait !== (currentOrientation === 'portrait')) {
+                currentOrientation = isPortrait ? 'portrait' : 'landscape';
+                
+                const portraitBg = 'https://raw.githubusercontent.com/Daniil160111/HIDE-TO-SURVIVE/refs/heads/main/InShot_20260320_105810616.jpg';
+                const landscapeBg = 'https://raw.githubusercontent.com/Daniil160111/HIDE-TO-SURVIVE/refs/heads/main/InShot_20260320_105704810.jpg';
+                const bgImage = isPortrait ? portraitBg : landscapeBg;
+                
+                document.getElementById('auth-screen').style.backgroundImage = `url('${bgImage}')`;
+                document.getElementById('menu-screen').style.backgroundImage = `url('${bgImage}')`;
+                document.getElementById('rooms-screen').style.backgroundImage = `url('${bgImage}')`;
+                document.getElementById('settings-screen').style.backgroundImage = `url('${bgImage}')`;
+            }
+        }
+
+        window.addEventListener('resize', updateBackgrounds);
+        window.addEventListener('orientationchange', updateBackgrounds);
+
         function checkOrientation() {
-            // Просто показываем предупреждение, но не блокируем
             if (window.innerHeight > window.innerWidth) {
                 document.getElementById('orientation-warning').classList.add('active');
             } else {
                 document.getElementById('orientation-warning').classList.remove('active');
             }
+            updateBackgrounds();
         }
         window.addEventListener('resize', checkOrientation);
         window.addEventListener('orientationchange', checkOrientation);
@@ -886,7 +908,6 @@
             return null;
         }
 
-        // Переопределяем стандартные диалоги
         window.alert = showAlert;
         window.confirm = showConfirm;
         window.prompt = showPrompt;
@@ -894,22 +915,28 @@
         // ================== МУЗЫКА И ЗВУКИ ==================
         async function loadAudioWithCache(url, element) {
             try {
-                const cache = await caches.open('audio-cache');
-                const response = await cache.match(url);
-                if (response) {
+                const cache = await caches.open('audio-cache-v2');
+                const cachedResponse = await cache.match(url);
+                
+                if (cachedResponse) {
+                    const blob = await cachedResponse.blob();
+                    element.src = URL.createObjectURL(blob);
+                    element.load();
+                    console.log(`Аудио загружено из кэша: ${url}`);
+                } else {
+                    const response = await fetch(url);
+                    const clone = response.clone();
+                    await cache.put(url, clone);
                     const blob = await response.blob();
                     element.src = URL.createObjectURL(blob);
-                } else {
-                    const fetchResponse = await fetch(url);
-                    const clone = fetchResponse.clone();
-                    cache.put(url, clone);
-                    const blob = await fetchResponse.blob();
-                    element.src = URL.createObjectURL(blob);
+                    element.load();
+                    console.log(`Аудио загружено и сохранено в кэш: ${url}`);
                 }
             } catch (e) {
+                console.warn('Ошибка кэширования аудио:', e);
                 element.src = url;
+                element.load();
             }
-            element.load();
         }
 
         function initAudio() {
@@ -920,63 +947,132 @@
             bgMusic.volume = 0;
             roomMusic.volume = 0;
             
-            // Запускаем главную музыку
-            bgMusic.play().catch(() => {});
-            fadeAudio(bgMusic, 1.0, 2000);
+            bgMusic.play().catch(e => console.log('Автозапуск музыки:', e));
         }
 
         function playButtonSound() {
-            buttonSound.currentTime = 0;
-            buttonSound.play().catch(() => {});
+            if (buttonSound) {
+                buttonSound.currentTime = 0;
+                buttonSound.play().catch(() => {});
+            }
         }
 
+        let currentFadeAnimation = null;
+        
         function fadeAudio(element, target, duration = 1000) {
-            const start = element.volume;
-            const startTime = Date.now();
+            if (currentFadeAnimation) {
+                cancelAnimationFrame(currentFadeAnimation);
+            }
             
-            const step = () => {
-                const now = Date.now();
+            const start = element.volume;
+            const startTime = performance.now();
+            
+            function step(now) {
                 const elapsed = now - startTime;
                 const progress = Math.min(elapsed / duration, 1);
-                
                 element.volume = start + (target - start) * progress;
                 
                 if (progress < 1) {
-                    requestAnimationFrame(step);
+                    currentFadeAnimation = requestAnimationFrame(step);
+                } else {
+                    currentFadeAnimation = null;
                 }
-            };
+            }
             
-            requestAnimationFrame(step);
+            currentFadeAnimation = requestAnimationFrame(step);
         }
 
-        function switchMusic(toRoom) {
-            if (toRoom) {
+        function transitionToRoom() {
+            return new Promise((resolve) => {
+                // Плавно затемняем фон
+                overlay.classList.add('dark');
+                
+                // Плавно затихает главная музыка
                 fadeAudio(bgMusic, 0, 1000);
+                
                 setTimeout(() => {
                     bgMusic.pause();
                     roomMusic.currentTime = 0;
                     roomMusic.play().catch(() => {});
-                    fadeAudio(roomMusic, 1.0, 2000);
+                    fadeAudio(roomMusic, 1.0, 1000);
+                    resolve();
                 }, 1000);
-            } else {
+            });
+        }
+
+        function transitionFromRoom() {
+            return new Promise((resolve) => {
+                // Убираем затемнение фона
+                overlay.classList.remove('dark');
+                
+                // Плавно затихает комнатная музыка
                 fadeAudio(roomMusic, 0, 1000);
+                
                 setTimeout(() => {
                     roomMusic.pause();
                     bgMusic.play().catch(() => {});
-                    fadeAudio(bgMusic, 1.0, 2000);
+                    fadeAudio(bgMusic, 1.0, 1000);
+                    resolve();
                 }, 1000);
-            }
+            });
         }
 
-        // ================== ЗАТЕМНЕНИЕ ==================
-        function setOverlay(opacity, duration = 500) {
-            overlay.classList.remove('hidden');
-            overlay.style.transition = `opacity ${duration}ms`;
-            overlay.style.opacity = opacity;
+        function transitionToSubMenu() {
+            return new Promise((resolve) => {
+                overlay.classList.add('dark');
+                fadeAudio(bgMusic, 0.5, 500);
+                setTimeout(resolve, 500);
+            });
+        }
+
+        function transitionFromSubMenu() {
+            return new Promise((resolve) => {
+                overlay.classList.remove('dark');
+                fadeAudio(bgMusic, 1.0, 500);
+                setTimeout(resolve, 500);
+            });
+        }
+
+        // ================== БЛОКИРОВКА КНОПОК ==================
+        function lockButtons() {
+            document.getElementById('app').classList.add('transition-lock');
+        }
+
+        function unlockButtons() {
+            document.getElementById('app').classList.remove('transition-lock');
+        }
+
+        async function transitionTo(screenName, targetMusic = 'menu') {
+            if (isTransitioning) return;
+            isTransitioning = true;
+            lockButtons();
             
-            if (opacity === 0) {
-                setTimeout(() => overlay.classList.add('hidden'), duration);
+            const currentScreen = document.querySelector('.screen.active');
+            const targetScreen = document.getElementById(`${screenName}-screen`);
+            
+            if (!targetScreen) {
+                unlockButtons();
+                isTransitioning = false;
+                return;
             }
+            
+            // Плавное затемнение фона
+            if (targetMusic === 'room') {
+                await transitionToRoom();
+            } else if (targetMusic === 'submenu') {
+                await transitionToSubMenu();
+            } else {
+                await transitionFromSubMenu();
+            }
+            
+            // Смена экрана
+            if (currentScreen) currentScreen.classList.remove('active');
+            targetScreen.classList.add('active');
+            
+            setTimeout(() => {
+                unlockButtons();
+                isTransitioning = false;
+            }, 100);
         }
 
         // ================== АВТОРИЗАЦИЯ ==================
@@ -1059,27 +1155,38 @@
         }
 
         // ================== КОМНАТЫ ==================
-        function showRoomList() {
+        async function showRoomList() {
             playButtonSound();
-            setOverlay(0.4, 500);
-            switchMusic(false);
-            document.getElementById('menu-screen').classList.remove('active');
-            document.getElementById('rooms-screen').classList.add('active');
+            await transitionTo('rooms', 'submenu');
             loadRooms();
         }
 
-        function hideRooms() {
+        async function hideRooms() {
             playButtonSound();
-            setOverlay(0, 500);
-            document.getElementById('rooms-screen').classList.remove('active');
-            document.getElementById('menu-screen').classList.add('active');
+            await transitionTo('menu', 'menu');
         }
 
         async function loadRooms() {
-            const snapshot = await db.collection(ROOMS).where('status', '==', 'waiting').get();
+            const snapshot = await db.collection(ROOMS)
+                .where('status', '==', 'waiting')
+                .where('players', '!=', [])
+                .get();
+            
             const container = document.getElementById('rooms-list');
             container.innerHTML = '';
-            snapshot.forEach(doc => {
+            
+            // Фильтруем комнаты с игроками
+            const roomsWithPlayers = snapshot.docs.filter(doc => {
+                const data = doc.data();
+                return data.players && data.players.length > 0;
+            });
+            
+            if (roomsWithPlayers.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:40px;">Нет доступных комнат<br>Создайте свою!</div>';
+                return;
+            }
+            
+            roomsWithPlayers.forEach(doc => {
                 const data = doc.data();
                 container.innerHTML += `
                     <div class="room-item" onclick="joinRoom('${doc.id}')">
@@ -1131,10 +1238,7 @@
             });
             
             currentRoomId = roomId;
-            document.getElementById('rooms-screen').classList.remove('active');
-            document.getElementById('room-screen').classList.add('active');
-            setOverlay(0, 500);
-            switchMusic(true);
+            await transitionTo('room', 'room');
             listenRoom(roomId);
         }
 
@@ -1149,7 +1253,6 @@
                 currentRoomData = doc.data();
                 updateRoomUI();
                 
-                // Автоматическое удаление комнаты, если в ней 0 игроков
                 if (currentRoomData.players.length === 0) {
                     doc.ref.delete();
                 }
@@ -1186,7 +1289,6 @@
                 readyBtn.classList.remove('ready');
             }
 
-            // Показываем кнопку удаления только для создателя
             const deleteBtn = document.getElementById('delete-room-btn');
             if (data.host === currentUser.nickname) {
                 deleteBtn.style.display = 'inline-block';
@@ -1194,7 +1296,6 @@
                 deleteBtn.style.display = 'none';
             }
 
-            // Проверка на старт игры
             if (data.status === 'playing') {
                 start3DGame();
             }
@@ -1215,7 +1316,6 @@
                 });
             }
 
-            // Проверяем, можно ли начать игру
             const newData = (await db.collection(ROOMS).doc(currentRoomId).get()).data();
             if (newData.ready.length >= newData.minPlayers && 
                 newData.ready.length === newData.players.length && 
@@ -1234,19 +1334,16 @@
             }
         }
 
-        function leaveRoom() {
+        async function leaveRoom() {
             playButtonSound();
             if (roomListener) roomListener();
             if (currentRoomId) {
-                db.collection(ROOMS).doc(currentRoomId).update({
+                await db.collection(ROOMS).doc(currentRoomId).update({
                     players: firebase.firestore.FieldValue.arrayRemove(currentUser.nickname),
                     ready: firebase.firestore.FieldValue.arrayRemove(currentUser.nickname)
                 });
             }
-            document.getElementById('room-screen').classList.remove('active');
-            document.getElementById('rooms-screen').classList.add('active');
-            setOverlay(0.4, 500);
-            switchMusic(false);
+            await transitionTo('rooms', 'menu');
             currentRoomId = null;
         }
 
@@ -1259,8 +1356,6 @@
         function start3DGame() {
             document.getElementById('room-screen').classList.remove('active');
             document.getElementById('game-screen').classList.add('active');
-            setOverlay(0, 500);
-            
             initThree();
             initNetwork();
             animate();
@@ -1289,7 +1384,6 @@
             dirLight.castShadow = true;
             scene.add(dirLight);
 
-            // Огромная карта
             const groundGeometry = new THREE.PlaneGeometry(200, 200);
             const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x2a1a1a });
             const ground = new THREE.Mesh(groundGeometry, groundMaterial);
@@ -1297,7 +1391,6 @@
             ground.receiveShadow = true;
             scene.add(ground);
 
-            // Стены и препятствия
             for (let i = 0; i < 50; i++) {
                 const wall = new THREE.Mesh(
                     new THREE.BoxGeometry(2, 5, 10),
@@ -1396,16 +1489,14 @@
             renderer.render(scene, camera);
         }
 
-        function leaveGame() {
+        async function leaveGame() {
             playButtonSound();
             clearInterval(gameLoop);
             if (currentRoomId) {
                 rtdb.ref(`game_rooms/${currentRoomId}/players/${myPlayerId}`).remove();
-                db.collection(ROOMS).doc(currentRoomId).update({ status: 'waiting' });
+                await db.collection(ROOMS).doc(currentRoomId).update({ status: 'waiting' });
             }
-            document.getElementById('game-screen').classList.remove('active');
-            document.getElementById('menu-screen').classList.add('active');
-            switchMusic(false);
+            await transitionTo('menu', 'menu');
         }
 
         // ================== УПРАВЛЕНИЕ ==================
@@ -1455,37 +1546,24 @@
             setTimeout(() => myPos.y -= 1, 200);
         });
 
-        document.getElementById('interact-btn').addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            // Для будущих взаимодействий
-        });
-
         // ========== ТРАНСЛЯЦИЯ ==========
-        function showStream() {
+        async function showStream() {
             playButtonSound();
-            setOverlay(0.4, 500);
-            document.getElementById('menu-screen').classList.remove('active');
-            document.getElementById('stream-screen').classList.add('active');
+            await transitionTo('stream', 'submenu');
         }
-        function hideStream() {
+        async function hideStream() {
             playButtonSound();
-            setOverlay(0, 500);
-            document.getElementById('stream-screen').classList.remove('active');
-            document.getElementById('menu-screen').classList.add('active');
+            await transitionTo('menu', 'menu');
         }
 
         // ========== НАСТРОЙКИ ==========
-        function showSettings() {
+        async function showSettings() {
             playButtonSound();
-            setOverlay(0.4, 500);
-            document.getElementById('menu-screen').classList.remove('active');
-            document.getElementById('settings-screen').classList.add('active');
+            await transitionTo('settings', 'submenu');
         }
-        function hideSettings() {
+        async function hideSettings() {
             playButtonSound();
-            setOverlay(0, 500);
-            document.getElementById('settings-screen').classList.remove('active');
-            document.getElementById('menu-screen').classList.add('active');
+            await transitionTo('menu', 'menu');
         }
 
         async function changePassword() {
@@ -1545,6 +1623,7 @@
 
         // ========== ЗАГРУЗКА ==========
         window.onload = () => {
+            updateBackgrounds();
             const saved = localStorage.getItem('hns_user');
             if (saved) {
                 currentUser = JSON.parse(saved);
