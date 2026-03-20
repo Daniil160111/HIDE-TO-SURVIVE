@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -580,4 +580,4 @@
         window.onload = () => { const saved = localStorage.getItem('hns_user'); if (saved) { currentUser = JSON.parse(saved); db.collection(GAME_USERS).doc(currentUser.nickname).get().then(doc => { if (doc.exists) { currentUser = doc.data(); currentUser.nickname = doc.id; completeLogin(); } else { localStorage.removeItem('hns_user'); location.reload(); } }); } };
     </script>
 </body>
-</html>
+    </html>
