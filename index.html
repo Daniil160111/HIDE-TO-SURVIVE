@@ -8,7 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <!-- Three.js для 3D графики -->
+    <!-- Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         * {
@@ -24,42 +24,57 @@
             color: white;
             overflow: hidden;
             touch-action: none;
-        }
-        /* ориентация */
-        #orientation-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #100000;
-            z-index: 10000;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 2rem;
-            text-align: center;
-            padding: 2rem;
-            backdrop-filter: blur(10px);
-            border: 4px solid #8b0000;
-            display: none;
-        }
-        @media (orientation: portrait) {
-            #orientation-overlay {
-                display: flex;
-            }
+            min-height: 100vh;
         }
         #app {
             position: relative;
             width: 100vw;
             height: 100vh;
-            aspect-ratio: 16 / 9;
-            max-width: 100vw;
-            max-height: 100vh;
-            margin: auto;
-            top: 50%;
-            transform: translateY(-50%);
+            background: #000;
+            box-shadow: 0 0 50px rgba(255,0,0,0.2);
+        }
+        /* Адаптивный контейнер с сохранением пропорций для заданных размеров */
+        #game-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background: #000;
         }
-        /* затемняющий оверлей для переходов */
+        #game-viewport {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 1460px;
+            max-height: 1306px;
+            aspect-ratio: 1460 / 1306; /* универсальное соотношение, но будет меняться под ориентацию */
+            background: #1a0a0a;
+            overflow: hidden;
+            box-shadow: 0 0 60px #8b0000;
+        }
+        /* Динамическое изменение соотношения через JS, но зададим базовые */
+        @media (orientation: landscape) {
+            #game-viewport {
+                aspect-ratio: 1460 / 576;
+                max-width: 1460px;
+                max-height: 576px;
+            }
+        }
+        @media (orientation: portrait) {
+            #game-viewport {
+                aspect-ratio: 720 / 1306;
+                max-width: 720px;
+                max-height: 1306px;
+            }
+        }
+        /* затемняющий оверлей */
         #dark-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -86,20 +101,19 @@
         .screen.active {
             display: flex;
         }
-        /* затемнение фона для вложенных экранов */
+        /* затемнение фона */
         .screen.dimmed {
             filter: brightness(0.4);
         }
-        /* анимация кнопок: падение сверху */
+        /* анимация падения */
         @keyframes dropDown {
             0% { opacity: 0; transform: translateY(-80px); }
             100% { opacity: 1; transform: translateY(0); }
         }
-        .menu-btn, .btn, .create-room, .room-item, .ready-btn, .back-btn, .auth-card, .settings-item {
-            animation: dropDown 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
-            opacity: 0; /* начальное состояние */
+        .menu-btn, .btn, .create-room, .room-item, .ready-btn, .back-btn, .auth-card, .settings-item, .player-slot {
+            animation: dropDown 0.3s cubic-bezier(0.2,0.9,0.3,1) forwards;
+            opacity: 0;
         }
-        /* задержки для последовательности */
         .menu-btn:nth-child(1) { animation-delay: 0.05s; }
         .menu-btn:nth-child(2) { animation-delay: 0.1s; }
         .menu-btn:nth-child(3) { animation-delay: 0.15s; }
@@ -107,7 +121,7 @@
         .room-item { animation-delay: 0.15s; }
         .back-btn { animation-delay: 0.02s; }
 
-        /* кастомные диалоги */
+        /* кастомный диалог */
         #custom-dialog {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -119,25 +133,24 @@
             align-items: center;
         }
         .dialog-box {
-            width: 80%;
-            max-width: 400px;
+            width: min(80%, 400px);
             background: #1a0a0a;
             border: 3px solid #8b0000;
             border-radius: 48px;
-            padding: 30px 20px;
+            padding: clamp(15px, 4vh, 30px) clamp(10px, 3vw, 20px);
             box-shadow: 0 0 60px #ff0000;
             text-align: center;
             color: white;
         }
         .dialog-box input {
             width: 100%;
-            padding: 16px;
-            margin: 15px 0;
+            padding: clamp(10px, 2vh, 16px);
+            margin: 10px 0;
             background: #2a1a1a;
             border: 1px solid #ff4d4d;
             border-radius: 40px;
             color: white;
-            font-size: 18px;
+            font-size: clamp(14px, 2vh, 18px);
         }
         .dialog-buttons {
             display: flex;
@@ -147,226 +160,302 @@
         }
         .dialog-btn {
             flex: 1;
-            padding: 16px;
+            padding: clamp(10px, 2vh, 16px);
             border: none;
             border-radius: 40px;
             background: #8b0000;
             color: white;
             font-weight: bold;
-            font-size: 18px;
+            font-size: clamp(14px, 2vh, 18px);
             cursor: pointer;
         }
-        .dialog-btn.cancel {
-            background: #333;
-        }
+        .dialog-btn.cancel { background: #333; }
 
         /* Авторизация */
         #auth-screen {
             justify-content: center;
             align-items: center;
             background-image: url('https://raw.githubusercontent.com/Daniil160111/HIDE-TO-SURVIVE/refs/heads/main/InShot_20260320_082743991.jpg');
+            background-size: cover;
         }
         .auth-card {
-            width: 90%;
-            max-width: 380px;
+            width: min(90%, 400px);
             background: rgba(20, 20, 35, 0.9);
             backdrop-filter: blur(15px);
             border-radius: 32px;
-            padding: 28px 20px;
+            padding: clamp(20px, 4vh, 28px) clamp(15px, 3vw, 20px);
             box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 30px #8b0000;
-            border: 1px solid rgba(200, 0, 0, 0.5);
         }
-        /* остальные стили сохраняются, дополним немного */
         .auth-card h1 {
-            text-align: center;
-            color: #ff4d4d;
-            margin-bottom: 24px;
-            font-size: 2.5rem;
-            font-weight: 800;
-            letter-spacing: 4px;
-            text-shadow: 0 0 20px #ff0000, 2px 2px 0 #300;
+            font-size: clamp(2rem, 6vw, 2.8rem);
+            margin-bottom: 20px;
         }
-        .auth-step { display: none; }
-        .auth-step.active { display: block; }
         .auth-input {
-            width: 100%;
-            padding: 16px 20px;
-            margin: 8px 0;
-            background: #1e1e30;
-            border: none;
-            border-radius: 30px;
-            color: white;
-            font-size: 16px;
-            outline: none;
-            border: 1px solid #8b0000;
+            padding: clamp(12px, 2.5vh, 16px) 20px;
+            font-size: clamp(14px, 2vh, 16px);
         }
         .btn {
-            width: 100%;
-            padding: 16px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 40px;
-            background: linear-gradient(145deg, #8b0000, #4a0000);
-            color: white;
-            font-weight: 700;
-            font-size: 18px;
-            cursor: pointer;
-            text-transform: uppercase;
+            padding: clamp(12px, 2.5vh, 16px);
+            font-size: clamp(16px, 2.5vh, 18px);
         }
-        .btn:active { transform: scale(0.96); background: #a00000; }
-        .link { color: #ffaaaa; text-align: center; margin-top: 15px; cursor: pointer; }
 
-        /* меню */
-        #menu-screen { background-image: url('https://raw.githubusercontent.com/Daniil160111/HIDE-TO-SURVIVE/refs/heads/main/InShot_20260320_082743991.jpg'); }
-        .menu-header {
-            padding: 20px 25px;
-            display: flex;
-            justify-content: space-between;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255,0,0,0.3);
+        /* Меню */
+        #menu-screen {
+            background-image: url('https://raw.githubusercontent.com/Daniil160111/HIDE-TO-SURVIVE/refs/heads/main/InShot_20260320_082743991.jpg');
+            background-size: cover;
         }
-        .menu-header .nick {
-            background: #4a0000;
-            padding: 8px 18px;
-            border-radius: 40px;
-            border: 1px solid #ff4d4d;
+        .menu-header {
+            padding: clamp(10px, 2vh, 20px) clamp(15px, 3vw, 25px);
+            flex-wrap: wrap;
+        }
+        .menu-header .nick, .menu-header .coins {
+            padding: clamp(5px, 1.5vh, 8px) clamp(12px, 2vw, 18px);
+            font-size: clamp(14px, 2vh, 20px);
         }
         .menu-buttons {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
+            gap: clamp(10px, 2vh, 20px);
         }
         .menu-btn {
-            width: 280px;
-            padding: 22px;
-            border-radius: 60px;
-            background: rgba(70, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            border: 2px solid #ff4d4d;
-            font-size: 28px;
-            font-weight: 800;
-            color: white;
-            text-align: center;
-            box-shadow: 0 15px 35px #000000aa, 0 0 30px #ff0000;
-            cursor: pointer;
-            text-transform: uppercase;
+            width: min(70%, 320px);
+            padding: clamp(15px, 3vh, 22px);
+            font-size: clamp(20px, 4vw, 32px);
         }
-        .menu-btn.small { width: 220px; font-size: 22px; padding: 16px; }
-        .rooms-container { flex: 1; padding: 20px; overflow-y: auto; }
-        .room-item {
-            background: rgba(40, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid #ff4d4d;
-            border-radius: 30px;
-            padding: 20px;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
+        .menu-btn.small {
+            width: min(60%, 250px);
+            font-size: clamp(16px, 3vw, 24px);
         }
-        .create-room {
-            background: rgba(80, 0, 0, 0.9);
-            backdrop-filter: blur(10px);
-            border: 2px dashed #ff4d4d;
-            border-radius: 30px;
-            padding: 30px;
-            text-align: center;
-            margin: 20px;
-            cursor: pointer;
-            font-size: 24px;
+
+        /* Список комнат */
+        #rooms-screen {
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(8px);
         }
-        /* комната */
-        #room-screen { background: #0c0b16; }
+        .rooms-container {
+            padding: clamp(10px, 2vh, 20px);
+            max-height: calc(100% - 100px);
+            overflow-y: auto;
+        }
+        .room-item, .create-room {
+            padding: clamp(12px, 2.5vh, 20px);
+            font-size: clamp(16px, 2.5vh, 22px);
+            margin-bottom: 10px;
+        }
+
+        /* Комната ожидания */
+        #room-screen {
+            background: #0c0b16;
+        }
         .room-header {
-            padding: 20px;
-            display: flex;
-            gap: 15px;
-            background: #2a0000;
-            border-bottom: 2px solid #ff4d4d;
+            padding: clamp(8px, 1.8vh, 20px);
+            gap: 10px;
+            flex-wrap: wrap;
         }
-        .room-header button {
-            background: #5a0000;
-            border: none;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 40px;
-            font-size: 18px;
-            cursor: pointer;
+        .room-header button, .delete-room-btn {
+            padding: clamp(8px, 1.5vh, 12px) clamp(15px, 3vw, 24px);
+            font-size: clamp(14px, 2vh, 18px);
         }
-        .room-info { text-align: center; padding: 15px; font-size: 24px; color: #ffaaaa; }
-        .players-grid { flex:1; padding:20px; display:flex; flex-wrap: wrap; gap:20px; align-content:flex-start; }
+        .room-info {
+            padding: 10px;
+            font-size: clamp(16px, 2.5vh, 24px);
+            line-height: 1.3;
+        }
+        .players-grid {
+            padding: clamp(10px, 2vh, 20px);
+            gap: clamp(10px, 2vw, 20px);
+            justify-content: center;
+        }
         .player-slot {
-            background: #2a0a0a;
-            width: 130px; height: 150px;
-            border-radius:20px;
-            display:flex; flex-direction: column; align-items:center; justify-content:center;
-            border:2px solid #8b0000;
+            width: clamp(100px, 25vw, 140px);
+            height: clamp(120px, 28vh, 160px);
+            font-size: clamp(14px, 2vh, 18px);
         }
-        .player-slot.ready { border-color:#5eff8c; box-shadow:0 0 20px #2eff70; }
-        .delete-room-btn {
-            background: #8b0000;
-            padding: 10px 20px;
-            border-radius: 40px;
-            border: 1px solid white;
-            cursor: pointer;
+        .player-slot .avatar {
+            width: clamp(50px, 12vw, 70px);
+            height: clamp(50px, 12vw, 70px);
+            font-size: clamp(24px, 5vw, 32px);
         }
-        /* игра */
-        #game-screen { position: relative; z-index:1; background:#000; }
-        #game-canvas { display: block; width:100%; height:100%; }
+        .ready-btn {
+            padding: clamp(10px, 2vh, 12px) clamp(20px, 5vw, 30px);
+            font-size: clamp(16px, 2.5vh, 20px);
+            margin: 10px auto;
+            width: fit-content;
+        }
+
+        /* Игровой экран */
+        #game-screen {
+            background: #000;
+        }
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
         .game-ui {
-            position: absolute; bottom:40px; left:0; right:0;
-            display:flex; justify-content:space-between; padding:0 40px; pointer-events:none; z-index:20;
+            bottom: clamp(10px, 3vh, 40px);
+            padding: 0 clamp(10px, 3vw, 40px);
         }
         .joystick-area {
-            width:140px; height:140px; background:rgba(0,0,0,0.4); backdrop-filter:blur(8px);
-            border-radius:50%; border:3px solid #ff4d4d66; pointer-events:auto;
+            width: clamp(100px, 20vw, 160px);
+            height: clamp(100px, 20vw, 160px);
         }
-        .joystick-thumb { width:60px; height:60px; background:#ffffffcc; border-radius:50%; position:relative; top:50%; left:50%; transform:translate(-50%, -50%); }
-        .action-buttons { display:flex; gap:20px; pointer-events:auto; }
+        .joystick-thumb {
+            width: clamp(40px, 8vw, 60px);
+            height: clamp(40px, 8vw, 60px);
+        }
         .action-btn {
-            width:90px; height:90px; background:#8b0000; border-radius:50%; display:flex; align-items:center; justify-content:center;
-            font-size:28px; color:white; border:3px solid #ff4d4d; box-shadow:0 10px 0 #4a0000; cursor:pointer;
+            width: clamp(70px, 14vw, 100px);
+            height: clamp(70px, 14vw, 100px);
+            font-size: clamp(20px, 4vw, 28px);
+            box-shadow: 0 clamp(5px, 1vh, 10px) 0 #4a0000;
         }
-        .action-btn:active { transform:translateY(5px); box-shadow:0 5px 0 #4a0000; }
         .back-btn {
-            position:absolute; top:20px; right:20px; background:#4a0000; padding:10px 20px; border-radius:30px; cursor:pointer; z-index:30;
+            top: clamp(10px, 2vh, 20px);
+            right: clamp(10px, 2vw, 20px);
+            padding: clamp(8px, 1.5vh, 12px) clamp(15px, 3vw, 20px);
+            font-size: clamp(14px, 2vh, 18px);
+        }
+
+        /* Трансляция, настройки */
+        #stream-screen, #settings-screen {
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(8px);
+        }
+        .settings-item {
+            padding: clamp(15px, 3vh, 20px);
+            font-size: clamp(16px, 2.5vh, 20px);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .settings-item button {
+            padding: clamp(8px, 1.5vh, 12px) clamp(15px, 3vw, 25px);
+            font-size: clamp(14px, 2vh, 16px);
+        }
+
+        /* Скролл для вертикального режима */
+        .rooms-container, .players-grid {
+            -webkit-overflow-scrolling: touch;
         }
     </style>
 </head>
 <body>
-<div id="orientation-overlay">📱 Пожалуйста, поверните устройство горизонтально</div>
 <div id="app">
-    <div id="dark-overlay"></div>
-    <!-- Кастомный диалог -->
-    <div id="custom-dialog">
-        <div class="dialog-box">
-            <div id="dialog-message"></div>
-            <input type="text" id="dialog-input" style="display: none;" placeholder="...">
-            <input type="password" id="dialog-password" style="display: none;" placeholder="Пароль">
-            <div class="dialog-buttons">
-                <button class="dialog-btn" id="dialog-ok">OK</button>
-                <button class="dialog-btn cancel" id="dialog-cancel">Отмена</button>
+    <div id="game-container">
+        <div id="game-viewport">
+            <div id="dark-overlay"></div>
+
+            <!-- Кастомный диалог -->
+            <div id="custom-dialog">
+                <div class="dialog-box">
+                    <div id="dialog-message"></div>
+                    <input type="text" id="dialog-input" style="display: none;" placeholder="...">
+                    <input type="password" id="dialog-password" style="display: none;" placeholder="Пароль">
+                    <div class="dialog-buttons">
+                        <button class="dialog-btn" id="dialog-ok">OK</button>
+                        <button class="dialog-btn cancel" id="dialog-cancel">Отмена</button>
+                    </div>
+                </div>
+            </div>
+
+            <audio id="bg-music" loop preload="auto" crossorigin="anonymous"></audio>
+            <audio id="room-music" loop preload="auto" crossorigin="anonymous"></audio>
+            <audio id="click-sound" preload="auto" src="https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/jg-032316-sfx-elevator-button.mp3"></audio>
+
+            <!-- Экран авторизации -->
+            <div id="auth-screen" class="screen active">
+                <div class="auth-card">
+                    <h1>HIDE TO SURVIVE</h1>
+                    <div id="auth-step-1" class="auth-step active">
+                        <input type="text" id="auth-nickname" class="auth-input" placeholder="Никнейм (до 20)" maxlength="20">
+                        <button class="btn" onclick="nextAuthStep(2)">Продолжить</button>
+                    </div>
+                    <div id="auth-step-2" class="auth-step">
+                        <input type="password" id="auth-pass" class="auth-input" placeholder="Пароль">
+                        <input type="password" id="auth-pass-confirm" class="auth-input" placeholder="Подтвердите">
+                        <button class="btn" id="auth-action-btn" onclick="handleAuth()">Зарегистрироваться</button>
+                        <p class="link" onclick="goToAuthStep(1)">← Назад</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Главное меню -->
+            <div id="menu-screen" class="screen">
+                <div class="menu-header">
+                    <span class="nick" id="menu-nickname">Загрузка...</span>
+                    <span class="coins" id="menu-coins">💰 0</span>
+                </div>
+                <div class="menu-buttons">
+                    <div class="menu-btn" onclick="showRoomList()">ИГРАТЬ</div>
+                    <div class="menu-btn" onclick="showStream()">ТРАНСЛЯЦИЯ</div>
+                    <div class="menu-btn small" onclick="showSettings()">НАСТРОЙКИ</div>
+                </div>
+            </div>
+
+            <!-- Список комнат -->
+            <div id="rooms-screen" class="screen">
+                <div class="back-btn" onclick="hideRooms()">← Назад</div>
+                <div style="padding: 80px 20px 20px;">
+                    <div class="create-room" onclick="createRoom()">➕ СОЗДАТЬ КОМНАТУ</div>
+                    <div class="rooms-container" id="rooms-list"></div>
+                </div>
+            </div>
+
+            <!-- Комната ожидания -->
+            <div id="room-screen" class="screen">
+                <div class="room-header">
+                    <button onclick="leaveRoom()">← Выйти</button>
+                    <span style="flex:1; text-align:center; font-size:28px; color:#ff4d4d;" id="room-name">Комната</span>
+                    <button onclick="copyRoomId()">Код</button>
+                </div>
+                <div class="room-info">
+                    <span id="room-mode">Режим: Прятки</span> | 
+                    <span id="room-players">0/5</span> | 
+                    <span id="room-host">Владелец: ...</span>
+                </div>
+                <div class="players-grid" id="room-players-list"></div>
+                <div style="text-align: center;">
+                    <button class="ready-btn" id="ready-btn" onclick="toggleReady()">ГОТОВ</button>
+                </div>
+            </div>
+
+            <!-- Игровой экран -->
+            <div id="game-screen" class="screen">
+                <canvas id="game-canvas"></canvas>
+                <div class="game-ui">
+                    <div class="joystick-area" id="joystick">
+                        <div class="joystick-thumb" id="joystick-thumb"></div>
+                    </div>
+                    <div class="action-buttons">
+                        <div class="action-btn" id="jump-btn">⬆️</div>
+                        <div class="action-btn" id="interact-btn">👁️</div>
+                    </div>
+                </div>
+                <div id="spectator-mode" class="spectator-text" style="display: none;">👻 РЕЖИМ ПРИЗРАКА</div>
+                <div class="back-btn" onclick="leaveGame()">Выйти</div>
+            </div>
+
+            <!-- Трансляция -->
+            <div id="stream-screen" class="screen">
+                <div class="back-btn" onclick="hideStream()">← Назад</div>
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 32px; color: #aaa;">🎥 ТРАНСЛЯЦИЯ СКОРО...</div>
+            </div>
+
+            <!-- Настройки -->
+            <div id="settings-screen" class="screen">
+                <div class="back-btn" onclick="hideSettings()">← Назад</div>
+                <div style="padding: 80px 20px 20px;">
+                    <div class="settings-item"><span>Сменить пароль</span><button onclick="changePassword()">Изменить</button></div>
+                    <div class="settings-item"><span>Сменить никнейм</span><button onclick="changeNickname()">Изменить</button></div>
+                    <div class="settings-item"><span>Выйти</span><button onclick="logout()">Выход</button></div>
+                    <div class="settings-item"><span>Удалить аккаунт</span><button onclick="deleteAccount()">Удалить</button></div>
+                </div>
             </div>
         </div>
     </div>
-
-    <audio id="bg-music" loop preload="auto" crossorigin="anonymous"></audio>
-    <audio id="room-music" loop preload="auto" crossorigin="anonymous"></audio>
-    <audio id="click-sound" preload="auto" src="https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/jg-032316-sfx-elevator-button.mp3"></audio>
-
-    <!-- Экраны (без изменений структуры, только добавлены кнопки удаления комнаты) -->
-    <div id="auth-screen" class="screen active">...</div> <!-- содержимое вставлено ниже сокращенно из-за длины, но полностью сохранено -->
-    <!-- Полный код экранов из исходника я оставлю, но для краткости здесь не переписываю все, так как они остаются те же. Далее скрипт полностью переработан -->
 </div>
+
 <script>
     (function() {
-        // ========== ПОЛНЫЙ КОД С УЛУЧШЕНИЯМИ ==========
-        // Firebase config
+        // Firebase инициализация
         const firebaseConfig = {
             apiKey: "AIzaSyBU5us_We8l-Yq13lil9h1JrB9EMCdKOtk",
             authDomain: "messenger-e7f24.firebaseapp.com",
@@ -380,7 +469,6 @@
         const GAME_USERS = 'game_users_v2';
         const ROOMS = 'game_rooms_v2';
 
-        // Глобальные переменные
         let currentUser = null;
         let currentRoomId = null;
         let currentRoomData = null;
@@ -394,139 +482,72 @@
         let players = {};
         let threeScene, camera, renderer, playerSprites;
 
-        // Аудио менеджер с плавностью и кэшированием
+        // Audio Manager
         class AudioManager {
             constructor() {
-                this.bgMusic = document.getElementById('bg-music');
-                this.roomMusic = document.getElementById('room-music');
-                this.clickSound = document.getElementById('click-sound');
-                this.bgMusic.volume = 0;
-                this.roomMusic.volume = 0;
+                this.bg = document.getElementById('bg-music');
+                this.room = document.getElementById('room-music');
+                this.click = document.getElementById('click-sound');
+                this.bg.volume = 0;
+                this.room.volume = 0;
+                this.bg.src = 'https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/menu.mp3';
+                this.room.src = 'https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/Room.mp3';
+                this.bg.load();
+                this.room.load();
                 this.currentFade = null;
-                this.bufferCache = {}; // для кусочного воспроизведения (эмуляция)
-                // устанавливаем источники
-                this.bgMusic.src = 'https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/menu.mp3';
-                this.roomMusic.src = 'https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/Room.mp3';
-                // загружаем сразу
-                this.bgMusic.load();
-                this.roomMusic.load();
-                // обработка застревания - при низком buffered
-                this.bgMusic.addEventListener('waiting', () => this.handleStall(this.bgMusic));
-                this.roomMusic.addEventListener('waiting', () => this.handleStall(this.roomMusic));
             }
-            handleStall(audio) {
-                // эмуляция "застывания" последнего звука: просто замрем, браузер сам держит последний фрагмент
-                // дополнительно ничего не делаем, полагаемся на браузер
-                console.log('stall');
-            }
-            fadeTo(targetAudio, targetVolume, duration = 1.0) {
+            fadeTo(audio, target, sec = 0.8) {
                 if (this.currentFade) clearInterval(this.currentFade);
-                const startVol = targetAudio.volume;
+                const start = audio.volume;
                 const steps = 20;
-                const stepTime = duration / steps * 1000;
-                let step = 0;
-                const diff = targetVolume - startVol;
+                const stepTime = sec*1000/steps;
+                let i = 0;
                 const interval = setInterval(() => {
-                    step++;
-                    targetAudio.volume = startVol + diff * (step / steps);
-                    if (step >= steps) {
-                        targetAudio.volume = targetVolume;
-                        clearInterval(interval);
-                    }
+                    i++;
+                    audio.volume = start + (target-start)*(i/steps);
+                    if (i>=steps) { audio.volume = target; clearInterval(interval); }
                 }, stepTime);
                 this.currentFade = interval;
             }
-            playBg() {
-                this.bgMusic.play();
-                this.fadeTo(this.bgMusic, 1.0, 0.8);
-                this.fadeTo(this.roomMusic, 0.0, 0.5);
-            }
-            playRoom() {
-                this.roomMusic.play();
-                this.fadeTo(this.roomMusic, 1.0, 0.8);
-                this.fadeTo(this.bgMusic, 0.0, 0.5);
-            }
-            click() {
-                this.clickSound.currentTime = 0;
-                this.clickSound.play().catch(()=>{});
-            }
-            setDim(active) {
-                const overlay = document.getElementById('dark-overlay');
-                overlay.style.background = active ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0)';
-            }
+            playBg() { this.bg.play(); this.fadeTo(this.bg,1); this.fadeTo(this.room,0); }
+            playRoom() { this.room.play(); this.fadeTo(this.room,1); this.fadeTo(this.bg,0); }
+            click() { this.click.currentTime = 0; this.click.play().catch(()=>{}); }
+            setDim(on) { document.getElementById('dark-overlay').style.background = on ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0)'; }
         }
-        const audioMan = new AudioManager();
+        const audio = new AudioManager();
 
-        // Кастомный диалог
-        function showDialog(options) {
-            return new Promise((resolve) => {
-                const dialog = document.getElementById('custom-dialog');
-                const msg = document.getElementById('dialog-message');
-                const input = document.getElementById('dialog-input');
-                const pass = document.getElementById('dialog-password');
-                const okBtn = document.getElementById('dialog-ok');
-                const cancelBtn = document.getElementById('dialog-cancel');
-                msg.innerText = options.message || '';
-                input.style.display = 'none';
-                pass.style.display = 'none';
-                if (options.input) {
-                    input.style.display = 'block';
-                    input.value = '';
-                }
-                if (options.password) {
-                    pass.style.display = 'block';
-                    pass.value = '';
-                }
-                dialog.style.display = 'flex';
-                const onOK = () => {
-                    cleanup();
-                    let val = null;
-                    if (options.input) val = input.value;
-                    if (options.password) val = pass.value;
-                    resolve({ ok: true, value: val });
-                };
-                const onCancel = () => {
-                    cleanup();
-                    resolve({ ok: false });
-                };
-                const cleanup = () => {
-                    dialog.style.display = 'none';
-                    okBtn.removeEventListener('click', onOK);
-                    cancelBtn.removeEventListener('click', onCancel);
-                };
-                okBtn.addEventListener('click', onOK);
-                cancelBtn.addEventListener('click', onCancel);
+        // Dialog
+        function showDialog(opts) {
+            return new Promise(resolve => {
+                const d = document.getElementById('custom-dialog');
+                document.getElementById('dialog-message').innerText = opts.message || '';
+                const inp = document.getElementById('dialog-input');
+                const pwd = document.getElementById('dialog-password');
+                inp.style.display = opts.input ? 'block' : 'none';
+                pwd.style.display = opts.password ? 'block' : 'none';
+                if (opts.input) inp.value = '';
+                if (opts.password) pwd.value = '';
+                d.style.display = 'flex';
+                const ok = () => { cleanup(); resolve({ ok: true, value: opts.input ? inp.value : (opts.password ? pwd.value : null) }); };
+                const cancel = () => { cleanup(); resolve({ ok: false }); };
+                const cleanup = () => { d.style.display = 'none'; document.getElementById('dialog-ok').removeEventListener('click', ok); document.getElementById('dialog-cancel').removeEventListener('click', cancel); };
+                document.getElementById('dialog-ok').addEventListener('click', ok);
+                document.getElementById('dialog-cancel').addEventListener('click', cancel);
             });
         }
 
-        // Авторизация (сокращенно, логика сохранена)
+        // Auth
         let tempNickname = '';
-        // Быстрое восстановление структуры DOM, но чтобы не переписывать тонны, я вставлю основной skeleton
-        // Пропишем содержимое экранов заново через innerHTML? Но они уже есть в HTML, я дополню их id и функционал через JS.
-        // Так как в предоставленном HTML были сокращения (...), я восстановлю полную структуру в памяти через JS?
-        // Однако для brevity я буду опираться что элементы уже есть (в полном коде они присутствуют). Добавлю кнопку удаления комнаты.
-        // Для безопасности вставлю отсутствующие блоки через JS после загрузки.
-        window.addEventListener('load', function() {
-            // Проверим наличие всех необходимых элементов, доопределим
-            if (!document.getElementById('room-screen')) {
-                // быстрое восстановление (но в исходном они есть)
-            }
-        });
-
-        // переопределим функции авторизации с использованием кастомных диалогов
         window.nextAuthStep = async function(step) {
-            audioMan.click();
-            if (step === 2) {
-                const nickname = document.getElementById('auth-nickname').value.trim();
-                if (!nickname) {
-                    showDialog({ message: 'Введите никнейм' });
-                    return;
-                }
-                tempNickname = nickname;
-                const snapshot = await db.collection(GAME_USERS).where('nickname', '==', nickname).get();
+            audio.click();
+            if (step===2) {
+                const nick = document.getElementById('auth-nickname').value.trim();
+                if (!nick) return showDialog({message:'Введите ник'});
+                tempNickname = nick;
+                const snap = await db.collection(GAME_USERS).where('nickname','==',nick).get();
                 document.getElementById('auth-step-1').classList.remove('active');
                 document.getElementById('auth-step-2').classList.add('active');
-                if (!snapshot.empty) {
+                if (!snap.empty) {
                     document.getElementById('auth-pass-confirm').style.display = 'none';
                     document.getElementById('auth-action-btn').textContent = 'Войти';
                 } else {
@@ -535,202 +556,197 @@
                 }
             }
         };
-
+        window.goToAuthStep = (step) => {
+            document.querySelectorAll('.auth-step').forEach(s=>s.classList.remove('active'));
+            document.getElementById(`auth-step-${step}`).classList.add('active');
+        };
         window.handleAuth = async function() {
-            audioMan.click();
+            audio.click();
             const pass = document.getElementById('auth-pass').value;
-            const passConfirm = document.getElementById('auth-pass-confirm').value;
-            const isLoginMode = document.getElementById('auth-pass-confirm').style.display === 'none';
-            if (!pass) return showDialog({ message: 'Введите пароль' });
-            if (!isLoginMode) {
-                if (pass !== passConfirm) return showDialog({ message: 'Пароли не совпадают' });
+            const pass2 = document.getElementById('auth-pass-confirm').value;
+            const loginMode = document.getElementById('auth-pass-confirm').style.display === 'none';
+            if (!pass) return showDialog({message:'Введите пароль'});
+            if (!loginMode) {
+                if (pass !== pass2) return showDialog({message:'Пароли не совпадают'});
                 let playerId;
-                do {
-                    playerId = Math.floor(100000000 + Math.random() * 900000000).toString();
-                } while ((await db.collection(GAME_USERS).where('playerId', '==', playerId).get()).size > 0);
-                currentUser = {
-                    nickname: tempNickname,
-                    password: pass,
-                    playerId: playerId,
-                    coins: 100,
-                    skin: 'default',
-                    createdAt: Date.now()
-                };
+                do { playerId = Math.floor(1e8+Math.random()*9e8).toString(); } while ((await db.collection(GAME_USERS).where('playerId','==',playerId).get()).size);
+                currentUser = { nickname: tempNickname, password: pass, playerId, coins:100, skin:'default', createdAt:Date.now() };
                 await db.collection(GAME_USERS).doc(tempNickname).set(currentUser);
                 completeLogin();
             } else {
-                const userDoc = await db.collection(GAME_USERS).doc(tempNickname).get();
-                if (!userDoc.exists) return showDialog({ message: 'Аккаунт не найден' });
-                if (userDoc.data().password !== pass) return showDialog({ message: 'Неверный пароль' });
-                currentUser = userDoc.data();
-                currentUser.nickname = tempNickname;
+                const doc = await db.collection(GAME_USERS).doc(tempNickname).get();
+                if (!doc.exists) return showDialog({message:'Не найден'});
+                if (doc.data().password !== pass) return showDialog({message:'Неверный пароль'});
+                currentUser = doc.data(); currentUser.nickname = tempNickname;
                 completeLogin();
             }
         };
-
         function completeLogin() {
             localStorage.setItem('hns_user', JSON.stringify(currentUser));
             document.getElementById('auth-screen').classList.remove('active');
             document.getElementById('menu-screen').classList.add('active');
             document.getElementById('menu-nickname').textContent = currentUser.nickname;
-            document.getElementById('menu-coins').textContent = `💰 ${currentUser.coins || 0}`;
-            audioMan.playBg();
+            document.getElementById('menu-coins').textContent = `💰 ${currentUser.coins||0}`;
+            audio.playBg();
         }
 
-        // showRoomList и другие с затемнением
-        window.showRoomList = function() {
-            audioMan.click();
-            audioMan.setDim(true);
-            document.getElementById('menu-screen').classList.add('dimmed');
-            document.getElementById('menu-screen').classList.remove('active');
-            document.getElementById('rooms-screen').classList.add('active');
-            loadRooms();
-        };
-        window.hideRooms = function() {
-            audioMan.click();
-            audioMan.setDim(false);
-            document.getElementById('menu-screen').classList.remove('dimmed');
-            document.getElementById('rooms-screen').classList.remove('active');
-            document.getElementById('menu-screen').classList.add('active');
-        };
-
+        // Rooms
+        window.showRoomList = () => { audio.click(); audio.setDim(true); document.getElementById('menu-screen').classList.add('dimmed'); document.getElementById('menu-screen').classList.remove('active'); document.getElementById('rooms-screen').classList.add('active'); loadRooms(); };
+        window.hideRooms = () => { audio.click(); audio.setDim(false); document.getElementById('menu-screen').classList.remove('dimmed'); document.getElementById('rooms-screen').classList.remove('active'); document.getElementById('menu-screen').classList.add('active'); };
         async function loadRooms() {
-            const snapshot = await db.collection(ROOMS).where('status', '==', 'waiting').get();
+            const snap = await db.collection(ROOMS).where('status','==','waiting').get();
             const container = document.getElementById('rooms-list');
             container.innerHTML = '';
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                container.innerHTML += `<div class="room-item" onclick="joinRoom('${doc.id}')">...</div>`; // упрощено
+            snap.forEach(doc => {
+                const d = doc.data();
+                container.innerHTML += `<div class="room-item" onclick="joinRoom('${doc.id}')"><div><div style="font-size:22px;">${doc.id.substr(-8)}</div><div>${d.mode==='normal'?'👻 Прятки':'🧟 Заражение'}</div><div>👑 ${d.host}</div></div><div>${d.players?.length||0}/${d.maxPlayers}</div></div>`;
             });
         }
-
         window.createRoom = async function() {
-            audioMan.click();
-            const dialog = await showDialog({ message: 'Режим: 1 - Прятки, 2 - Заражение', input: true });
-            if (!dialog.ok) return;
-            const mode = dialog.value;
-            if (mode !== '1' && mode !== '2') return;
-            const roomData = {
-                status: 'waiting',
-                createdAt: Date.now(),
-                players: [currentUser.nickname],
-                ready: [currentUser.nickname],
-                mode: mode === '2' ? 'infection' : 'normal',
-                minPlayers: mode === '2' ? 4 : 2,
-                maxPlayers: mode === '2' ? 8 : 5,
-                host: currentUser.nickname,
-                gameStarted: false
-            };
-            const roomRef = await db.collection(ROOMS).add(roomData);
-            joinRoom(roomRef.id);
+            audio.click();
+            const dlg = await showDialog({message:'Режим: 1 - Прятки, 2 - Заражение', input:true});
+            if (!dlg.ok) return;
+            const mode = dlg.value;
+            if (mode!=='1' && mode!=='2') return;
+            const roomData = { status:'waiting', createdAt:Date.now(), players:[currentUser.nickname], ready:[currentUser.nickname], mode:mode==='2'?'infection':'normal', minPlayers:mode==='2'?4:2, maxPlayers:mode==='2'?8:5, host:currentUser.nickname, gameStarted:false };
+            const ref = await db.collection(ROOMS).add(roomData);
+            joinRoom(ref.id);
         };
-
-        window.joinRoom = async function(roomId) {
-            audioMan.click();
-            const roomDoc = await db.collection(ROOMS).doc(roomId).get();
-            if (!roomDoc.exists) return showDialog({ message: 'Комната не найдена' });
-            const data = roomDoc.data();
-            if (data.players.length >= data.maxPlayers) return showDialog({ message: 'Комната заполнена' });
-            await db.collection(ROOMS).doc(roomId).update({
-                players: firebase.firestore.FieldValue.arrayUnion(currentUser.nickname)
-            });
-            currentRoomId = roomId;
+        window.joinRoom = async function(id) {
+            audio.click();
+            const doc = await db.collection(ROOMS).doc(id).get();
+            if (!doc.exists) return showDialog({message:'Нет комнаты'});
+            const d = doc.data();
+            if (d.players.length >= d.maxPlayers) return showDialog({message:'Полно'});
+            await db.collection(ROOMS).doc(id).update({ players: firebase.firestore.FieldValue.arrayUnion(currentUser.nickname) });
+            currentRoomId = id;
             document.getElementById('rooms-screen').classList.remove('active');
             document.getElementById('room-screen').classList.add('active');
-            audioMan.setDim(true); // фон черный, меню затемнено, но room-screen сам черный, оверлей не нуж?
-            audioMan.playRoom();
-            listenRoom(roomId);
+            audio.playRoom();
+            listenRoom(id);
         };
-
-        function listenRoom(roomId) {
+        function listenRoom(id) {
             if (roomListener) roomListener();
-            roomListener = db.collection(ROOMS).doc(roomId).onSnapshot(doc => {
+            roomListener = db.collection(ROOMS).doc(id).onSnapshot(doc => {
                 if (!doc.exists) { leaveRoom(); return; }
                 currentRoomData = doc.data();
                 updateRoomUI();
-                if (currentRoomData.players.length === 0) doc.ref.delete();
+                if (currentRoomData.players.length===0) doc.ref.delete();
             });
         }
-
         function updateRoomUI() {
-            const data = currentRoomData;
+            const d = currentRoomData;
             document.getElementById('room-name').textContent = `Комната ${currentRoomId.substr(-6)}`;
-            document.getElementById('room-mode').textContent = data.mode === 'normal' ? '👻 Прятки' : '🧟 Заражение';
-            document.getElementById('room-players').textContent = `${data.players.length}/${data.maxPlayers}`;
-            document.getElementById('room-host').textContent = `👑 ${data.host}`;
+            document.getElementById('room-mode').textContent = d.mode==='normal'?'👻 Прятки':'🧟 Заражение';
+            document.getElementById('room-players').textContent = `${d.players.length}/${d.maxPlayers}`;
+            document.getElementById('room-host').textContent = `👑 ${d.host}`;
             let html = '';
-            data.players.forEach(p => {
-                const ready = data.ready?.includes(p) ? 'ready' : '';
-                html += `<div class="player-slot ${ready}"><div class="avatar">${p[0]}</div>${p} ${ready?'✅':'⏳'}</div>`;
-            });
+            d.players.forEach(p => { const r = d.ready?.includes(p)?'ready':''; html += `<div class="player-slot ${r}"><div class="avatar">${p[0]}</div>${p} ${r?'✅':'⏳'}</div>`; });
             document.getElementById('room-players-list').innerHTML = html;
-            if (data.host === currentUser.nickname) {
-                if (!document.getElementById('delete-room-btn')) {
-                    const btn = document.createElement('button');
-                    btn.id = 'delete-room-btn';
-                    btn.className = 'delete-room-btn';
-                    btn.innerText = 'Удалить комнату';
-                    btn.onclick = deleteRoom;
-                    document.querySelector('.room-header').appendChild(btn);
-                }
+            if (d.host === currentUser.nickname && !document.getElementById('delete-room-btn')) {
+                const btn = document.createElement('button');
+                btn.id = 'delete-room-btn'; btn.className = 'delete-room-btn'; btn.innerText = '🗑️ Удалить';
+                btn.onclick = deleteRoom;
+                document.querySelector('.room-header').appendChild(btn);
             }
         }
-
         window.deleteRoom = async function() {
-            const conf = await showDialog({ message: 'Удалить комнату?' });
+            const conf = await showDialog({message:'Удалить комнату?'});
             if (!conf.ok) return;
             await db.collection(ROOMS).doc(currentRoomId).delete();
             leaveRoom();
         };
-
         window.leaveRoom = function() {
-            audioMan.click();
+            audio.click();
             if (roomListener) roomListener();
-            if (currentRoomId) {
-                db.collection(ROOMS).doc(currentRoomId).update({
-                    players: firebase.firestore.FieldValue.arrayRemove(currentUser.nickname),
-                    ready: firebase.firestore.FieldValue.arrayRemove(currentUser.nickname)
-                });
-            }
+            if (currentRoomId) db.collection(ROOMS).doc(currentRoomId).update({ players: firebase.firestore.FieldValue.arrayRemove(currentUser.nickname), ready: firebase.firestore.FieldValue.arrayRemove(currentUser.nickname) });
             document.getElementById('room-screen').classList.remove('active');
             document.getElementById('rooms-screen').classList.add('active');
             currentRoomId = null;
-            audioMan.playBg();
+            audio.playBg();
+        };
+        window.copyRoomId = () => { navigator.clipboard?.writeText(currentRoomId); showDialog({message:'Код скопирован'}); };
+        window.toggleReady = async function() {
+            if (!currentRoomData) return;
+            if (currentRoomData.ready?.includes(currentUser.nickname)) {
+                await db.collection(ROOMS).doc(currentRoomId).update({ ready: firebase.firestore.FieldValue.arrayRemove(currentUser.nickname) });
+            } else {
+                await db.collection(ROOMS).doc(currentRoomId).update({ ready: firebase.firestore.FieldValue.arrayUnion(currentUser.nickname) });
+            }
         };
 
-        // game, joystick и пр. (сохраняем логику)
-        // Вставлю остальное кратко, но функционально.
-        // Все нажатия кнопок: добавляем audioMan.click()
-        const original = window.leaveGame;
-        window.leaveGame = function() {
-            audioMan.click();
-            if (original) original();
-            audioMan.playBg();
+        // Game stubs
+        window.leaveGame = function() { audio.playBg(); /* stop game */ };
+        window.showStream = function() { audio.click(); audio.setDim(true); document.getElementById('menu-screen').classList.add('dimmed'); document.getElementById('menu-screen').classList.remove('active'); document.getElementById('stream-screen').classList.add('active'); };
+        window.hideStream = function() { audio.click(); audio.setDim(false); document.getElementById('menu-screen').classList.remove('dimmed'); document.getElementById('stream-screen').classList.remove('active'); document.getElementById('menu-screen').classList.add('active'); };
+        window.showSettings = function() { audio.click(); audio.setDim(true); document.getElementById('menu-screen').classList.add('dimmed'); document.getElementById('menu-screen').classList.remove('active'); document.getElementById('settings-screen').classList.add('active'); };
+        window.hideSettings = function() { audio.click(); audio.setDim(false); document.getElementById('menu-screen').classList.remove('dimmed'); document.getElementById('settings-screen').classList.remove('active'); document.getElementById('menu-screen').classList.add('active'); };
+        window.changePassword = async function() {
+            const old = await showDialog({message:'Старый пароль', password:true});
+            if (!old.ok || old.value !== currentUser.password) return showDialog({message:'Неверный'});
+            const np = await showDialog({message:'Новый пароль', password:true});
+            if (!np.ok) return;
+            const conf = await showDialog({message:'Подтвердите', password:true});
+            if (np.value !== conf.value) return showDialog({message:'Не совпадают'});
+            currentUser.password = np.value;
+            await db.collection(GAME_USERS).doc(currentUser.nickname).update({password: np.value});
+            showDialog({message:'Изменено'});
         };
-        // привяжем клики ко всем кнопкам
-        document.querySelectorAll('button, .btn, .menu-btn, .back-btn, .room-item, .create-room').forEach(el => {
-            el.addEventListener('click', (e) => {
-                if (!e.target.closest('#custom-dialog')) audioMan.click();
-            });
-        });
+        window.changeNickname = async function() {
+            const newNick = await showDialog({message:'Новый ник (до 20)', input:true});
+            if (!newNick.ok || !newNick.value) return;
+            const existing = await db.collection(GAME_USERS).where('nickname','==',newNick.value).get();
+            if (!existing.empty) return showDialog({message:'Занято'});
+            const old = currentUser.nickname;
+            currentUser.nickname = newNick.value;
+            await db.collection(GAME_USERS).doc(newNick.value).set(currentUser);
+            await db.collection(GAME_USERS).doc(old).delete();
+            localStorage.setItem('hns_user', JSON.stringify(currentUser));
+            document.getElementById('menu-nickname').textContent = newNick.value;
+            showDialog({message:'Готово'});
+        };
+        window.logout = async function() {
+            const conf = await showDialog({message:'Выйти?'});
+            if (conf.ok) { localStorage.removeItem('hns_user'); location.reload(); }
+        };
+        window.deleteAccount = async function() {
+            const p = await showDialog({message:'Введите пароль', password:true});
+            if (!p.ok || p.value !== currentUser.password) return showDialog({message:'Неверный пароль'});
+            const conf = await showDialog({message:'Безвозвратно удалить?'});
+            if (!conf.ok) return;
+            await db.collection(GAME_USERS).doc(currentUser.nickname).delete();
+            localStorage.removeItem('hns_user');
+            location.reload();
+        };
 
-        // Инициализация
+        // Joystick (stub for completeness)
+        const joystick = document.getElementById('joystick');
+        if(joystick) {
+            joystick.addEventListener('touchstart', (e) => { e.preventDefault(); joystickActive = true; });
+            joystick.addEventListener('touchend', () => { joystickActive = false; });
+        }
+
+        // Load saved user
         window.onload = () => {
             const saved = localStorage.getItem('hns_user');
             if (saved) {
                 currentUser = JSON.parse(saved);
                 db.collection(GAME_USERS).doc(currentUser.nickname).get().then(doc => {
                     if (doc.exists) {
-                        currentUser = doc.data();
-                        currentUser.nickname = doc.id;
+                        currentUser = doc.data(); currentUser.nickname = doc.id;
                         completeLogin();
-                    } else {
-                        localStorage.removeItem('hns_user');
-                    }
+                    } else localStorage.removeItem('hns_user');
                 });
             }
         };
+
+        // Click sound on any button
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('button, .btn, .menu-btn, .back-btn, .room-item, .create-room, .link, .delete-room-btn')) {
+                audio.click();
+            }
+        });
     })();
 </script>
 </body>
-</html>
+    </html>
