@@ -134,7 +134,7 @@
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            transition: background-image 0.5s ease;
+            transition: background-image 0.3s ease;
             z-index: 10;
         }
 
@@ -156,7 +156,7 @@
         }
 
         .screen-overlay.dark {
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.5);
         }
 
         /* Блокировка кнопок во время перехода */
@@ -177,8 +177,6 @@
         #auth-screen {
             justify-content: center;
             align-items: center;
-            background-size: cover;
-            background-position: center;
         }
 
         .auth-card {
@@ -674,9 +672,15 @@
     <!-- Затемнение для экранов -->
     <div id="screen-overlay" class="screen-overlay"></div>
 
-    <audio id="bg-music" loop preload="auto"></audio>
-    <audio id="room-music" loop preload="auto"></audio>
-    <audio id="button-sound" preload="auto"></audio>
+    <audio id="bg-music" loop preload="auto">
+        <source src="https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/menu.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="room-music" loop preload="auto">
+        <source src="https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/Room.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="button-sound" preload="auto">
+        <source src="https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/jg-032316-sfx-elevator-button.mp3" type="audio/mpeg">
+    </audio>
 
     <div id="app">
         <!-- Экран авторизации -->
@@ -821,6 +825,11 @@
         let roomMusic = document.getElementById('room-music');
         let buttonSound = document.getElementById('button-sound');
         let overlay = document.getElementById('screen-overlay');
+        
+        // Устанавливаем начальную громкость
+        bgMusic.volume = 0.8;
+        roomMusic.volume = 0.8;
+        buttonSound.volume = 0.5;
 
         // Ориентация и фон
         let currentOrientation = 'portrait';
@@ -912,58 +921,14 @@
         window.confirm = showConfirm;
         window.prompt = showPrompt;
 
-        // ================== МУЗЫКА И ЗВУКИ ==================
-        async function loadAudioWithCache(url, element) {
-            try {
-                const cache = await caches.open('audio-cache-v2');
-                const cachedResponse = await cache.match(url);
-                
-                if (cachedResponse) {
-                    const blob = await cachedResponse.blob();
-                    element.src = URL.createObjectURL(blob);
-                    element.load();
-                    console.log(`Аудио загружено из кэша: ${url}`);
-                } else {
-                    const response = await fetch(url);
-                    const clone = response.clone();
-                    await cache.put(url, clone);
-                    const blob = await response.blob();
-                    element.src = URL.createObjectURL(blob);
-                    element.load();
-                    console.log(`Аудио загружено и сохранено в кэш: ${url}`);
-                }
-            } catch (e) {
-                console.warn('Ошибка кэширования аудио:', e);
-                element.src = url;
-                element.load();
+        // ================== МУЗЫКА ==================
+        function playMusic() {
+            if (bgMusic.paused) {
+                bgMusic.play().catch(e => console.log('Автозапуск музыки:', e));
             }
         }
 
-        function initAudio() {
-            loadAudioWithCache('https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/menu.mp3', bgMusic);
-            loadAudioWithCache('https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/Room.mp3', roomMusic);
-            loadAudioWithCache('https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/jg-032316-sfx-elevator-button.mp3', buttonSound);
-            
-            bgMusic.volume = 0;
-            roomMusic.volume = 0;
-            
-            bgMusic.play().catch(e => console.log('Автозапуск музыки:', e));
-        }
-
-        function playButtonSound() {
-            if (buttonSound) {
-                buttonSound.currentTime = 0;
-                buttonSound.play().catch(() => {});
-            }
-        }
-
-        let currentFadeAnimation = null;
-        
-        function fadeAudio(element, target, duration = 1000) {
-            if (currentFadeAnimation) {
-                cancelAnimationFrame(currentFadeAnimation);
-            }
-            
+        function fadeAudio(element, target, duration = 500) {
             const start = element.volume;
             const startTime = performance.now();
             
@@ -973,64 +938,41 @@
                 element.volume = start + (target - start) * progress;
                 
                 if (progress < 1) {
-                    currentFadeAnimation = requestAnimationFrame(step);
-                } else {
-                    currentFadeAnimation = null;
+                    requestAnimationFrame(step);
                 }
             }
             
-            currentFadeAnimation = requestAnimationFrame(step);
+            requestAnimationFrame(step);
         }
 
-        function transitionToRoom() {
-            return new Promise((resolve) => {
-                // Плавно затемняем фон
-                overlay.classList.add('dark');
-                
-                // Плавно затихает главная музыка
-                fadeAudio(bgMusic, 0, 1000);
-                
-                setTimeout(() => {
-                    bgMusic.pause();
-                    roomMusic.currentTime = 0;
-                    roomMusic.play().catch(() => {});
-                    fadeAudio(roomMusic, 1.0, 1000);
-                    resolve();
-                }, 1000);
-            });
+        function switchToRoomMusic() {
+            fadeAudio(bgMusic, 0, 1000);
+            setTimeout(() => {
+                bgMusic.pause();
+                roomMusic.currentTime = 0;
+                roomMusic.play().catch(() => {});
+                fadeAudio(roomMusic, 0.8, 1000);
+            }, 1000);
         }
 
-        function transitionFromRoom() {
-            return new Promise((resolve) => {
-                // Убираем затемнение фона
-                overlay.classList.remove('dark');
-                
-                // Плавно затихает комнатная музыка
-                fadeAudio(roomMusic, 0, 1000);
-                
-                setTimeout(() => {
-                    roomMusic.pause();
-                    bgMusic.play().catch(() => {});
-                    fadeAudio(bgMusic, 1.0, 1000);
-                    resolve();
-                }, 1000);
-            });
+        function switchToMenuMusic() {
+            fadeAudio(roomMusic, 0, 1000);
+            setTimeout(() => {
+                roomMusic.pause();
+                bgMusic.play().catch(() => {});
+                fadeAudio(bgMusic, 0.8, 1000);
+            }, 1000);
         }
 
-        function transitionToSubMenu() {
-            return new Promise((resolve) => {
-                overlay.classList.add('dark');
-                fadeAudio(bgMusic, 0.5, 500);
-                setTimeout(resolve, 500);
-            });
+        function subMenuMusicVolume(volume) {
+            fadeAudio(bgMusic, volume, 500);
         }
 
-        function transitionFromSubMenu() {
-            return new Promise((resolve) => {
-                overlay.classList.remove('dark');
-                fadeAudio(bgMusic, 1.0, 500);
-                setTimeout(resolve, 500);
-            });
+        function playButtonSound() {
+            if (buttonSound) {
+                buttonSound.currentTime = 0;
+                buttonSound.play().catch(() => {});
+            }
         }
 
         // ================== БЛОКИРОВКА КНОПОК ==================
@@ -1056,13 +998,19 @@
                 return;
             }
             
-            // Плавное затемнение фона
+            // Музыка и затемнение
             if (targetMusic === 'room') {
-                await transitionToRoom();
+                overlay.classList.add('dark');
+                switchToRoomMusic();
+                await new Promise(r => setTimeout(r, 1000));
             } else if (targetMusic === 'submenu') {
-                await transitionToSubMenu();
+                overlay.classList.add('dark');
+                subMenuMusicVolume(0.5);
+                await new Promise(r => setTimeout(r, 500));
             } else {
-                await transitionFromSubMenu();
+                overlay.classList.remove('dark');
+                subMenuMusicVolume(0.8);
+                await new Promise(r => setTimeout(r, 500));
             }
             
             // Смена экрана
@@ -1151,7 +1099,10 @@
             document.getElementById('menu-screen').classList.add('active');
             document.getElementById('menu-nickname').textContent = currentUser.nickname;
             document.getElementById('menu-coins').textContent = `💰 ${currentUser.coins || 0}`;
-            initAudio();
+            
+            // Запускаем музыку
+            bgMusic.volume = 0.8;
+            bgMusic.play().catch(e => console.log('Музыка не запустилась:', e));
         }
 
         // ================== КОМНАТЫ ==================
@@ -1169,13 +1120,11 @@
         async function loadRooms() {
             const snapshot = await db.collection(ROOMS)
                 .where('status', '==', 'waiting')
-                .where('players', '!=', [])
                 .get();
             
             const container = document.getElementById('rooms-list');
             container.innerHTML = '';
             
-            // Фильтруем комнаты с игроками
             const roomsWithPlayers = snapshot.docs.filter(doc => {
                 const data = doc.data();
                 return data.players && data.players.length > 0;
@@ -1366,9 +1315,9 @@
             const width = window.innerWidth;
             const height = window.innerHeight;
 
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x1a0a0a);
-            scene.fog = new THREE.Fog(0x1a0a0a, 30, 100);
+            threeScene = new THREE.Scene();
+            threeScene.background = new THREE.Color(0x1a0a0a);
+            threeScene.fog = new THREE.Fog(0x1a0a0a, 30, 100);
 
             camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
             camera.position.set(0, 2, 5);
@@ -1378,18 +1327,18 @@
             renderer.shadowMap.enabled = true;
 
             const ambientLight = new THREE.AmbientLight(0x402020);
-            scene.add(ambientLight);
+            threeScene.add(ambientLight);
             const dirLight = new THREE.DirectionalLight(0xffaaaa, 1);
             dirLight.position.set(5, 10, 7);
             dirLight.castShadow = true;
-            scene.add(dirLight);
+            threeScene.add(dirLight);
 
             const groundGeometry = new THREE.PlaneGeometry(200, 200);
             const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x2a1a1a });
             const ground = new THREE.Mesh(groundGeometry, groundMaterial);
             ground.rotation.x = -Math.PI / 2;
             ground.receiveShadow = true;
-            scene.add(ground);
+            threeScene.add(ground);
 
             for (let i = 0; i < 50; i++) {
                 const wall = new THREE.Mesh(
@@ -1401,7 +1350,7 @@
                 wall.position.y = 2.5;
                 wall.castShadow = true;
                 wall.receiveShadow = true;
-                scene.add(wall);
+                threeScene.add(wall);
             }
 
             for (let i = 0; i < 30; i++) {
@@ -1414,7 +1363,7 @@
                 box.position.y = 1.5;
                 box.castShadow = true;
                 box.receiveShadow = true;
-                scene.add(box);
+                threeScene.add(box);
             }
 
             playerSprites = {};
@@ -1467,7 +1416,7 @@
                     const mat = new THREE.MeshStandardMaterial({ color: 0xff5555 });
                     const sprite = new THREE.Mesh(geo, mat);
                     sprite.position.set(p.x, p.y, p.z);
-                    scene.add(sprite);
+                    threeScene.add(sprite);
                     playerSprites[id] = sprite;
                 } else {
                     playerSprites[id].position.set(p.x, p.y, p.z);
@@ -1476,7 +1425,7 @@
 
             for (let id in playerSprites) {
                 if (!players[id]) {
-                    scene.remove(playerSprites[id]);
+                    threeScene.remove(playerSprites[id]);
                     delete playerSprites[id];
                 }
             }
@@ -1486,7 +1435,7 @@
             camera.position.y = myPos.y + 3;
             camera.lookAt(myPos.x, myPos.y + 1, myPos.z);
 
-            renderer.render(scene, camera);
+            renderer.render(threeScene, camera);
         }
 
         async function leaveGame() {
@@ -1509,6 +1458,7 @@
         }
         window.addEventListener('resize', updateJoystickRect);
         window.addEventListener('orientationchange', updateJoystickRect);
+        updateJoystickRect();
 
         joystick.addEventListener('touchstart', handleJoystick);
         joystick.addEventListener('touchmove', handleJoystick);
@@ -1546,6 +1496,11 @@
             setTimeout(() => myPos.y -= 1, 200);
         });
 
+        document.getElementById('interact-btn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            // Для будущих взаимодействий
+        });
+
         // ========== ТРАНСЛЯЦИЯ ==========
         async function showStream() {
             playButtonSound();
@@ -1575,8 +1530,8 @@
             if (!newPass) return;
             if (!/^[a-zA-Z0-9._-]{1,20}$/.test(newPass)) return alert('Недопустимый пароль');
             
-            const confirm = await prompt('Подтвердите новый пароль');
-            if (newPass !== confirm) return alert('Пароли не совпадают');
+            const confirmPass = await prompt('Подтвердите новый пароль');
+            if (newPass !== confirmPass) return alert('Пароли не совпадают');
             
             currentUser.password = newPass;
             await db.collection(GAME_USERS).doc(currentUser.nickname).update({ password: newPass });
@@ -1641,4 +1596,4 @@
         };
     </script>
 </body>
-    </html>
+</html>
