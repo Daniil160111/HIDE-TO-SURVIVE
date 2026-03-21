@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>HIDE TO SURVIVE - Психбольница</title>
+    <title>HIDE TO SURVIVE</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -13,61 +13,17 @@
         body { background: #0a0000; color: white; overflow: hidden; touch-action: none; }
         #app { position: relative; width: 100vw; height: 100vh; }
         
-        /* Анимированный фон — реалистичный туман + тёмные лучи */
-        .animated-bg {
+        /* Фон главного меню */
+        .menu-bg {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            background-size: cover;
+            background-position: center;
             z-index: 0;
-            background: radial-gradient(circle at 30% 40%, #1a2a1a, #0a0a1a);
-            overflow: hidden;
         }
-        /* Туман (несколько слоёв) */
-        .fog-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(ellipse at 30% 40%, rgba(100,150,100,0.15) 0%, rgba(20,30,20,0.4) 70%);
-            filter: blur(60px);
-            animation: fogMove 40s linear infinite;
-            opacity: 0.7;
-        }
-        .fog-layer2 {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(ellipse at 70% 60%, rgba(80,120,80,0.2) 0%, rgba(10,20,10,0.3) 80%);
-            filter: blur(80px);
-            animation: fogMove 60s linear infinite reverse;
-            opacity: 0.6;
-        }
-        @keyframes fogMove {
-            0% { transform: translate(-10%, -10%) rotate(0deg); }
-            100% { transform: translate(10%, 10%) rotate(2deg); }
-        }
-        /* Динамичные тёмные лучи */
-        .rays {
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: repeating-linear-gradient(45deg, rgba(50,30,70,0.2) 0px, rgba(50,30,70,0.2) 40px, rgba(30,20,50,0.1) 40px, rgba(30,20,50,0.1) 80px);
-            animation: raysRotate 30s linear infinite;
-            filter: blur(15px);
-            mix-blend-mode: overlay;
-        }
-        @keyframes raysRotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
         .screen {
             position: absolute;
             top: 0;
@@ -81,24 +37,32 @@
         }
         .screen.active { display: flex; }
         
-        .screen-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0); transition: background 0.5s; pointer-events: none; z-index: 2; }
-        .screen-overlay.dark { background: rgba(0,0,0,0.7); }
+        .screen-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0);
+            transition: background 0.5s;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .screen-overlay.dark { background: rgba(0,0,0,0.6); }
         .transition-lock { pointer-events: none; }
         
-        /* Анимация падающих кнопок с сильным отскоком */
         @keyframes slideDownBounce {
             0% { transform: translateY(-150px); opacity: 0; }
             60% { transform: translateY(25px); opacity: 1; }
             80% { transform: translateY(-8px); opacity: 1; }
             100% { transform: translateY(0); opacity: 1; }
         }
-        /* Заголовок падает без отскока */
         @keyframes slideDownNoBounce {
             0% { transform: translateY(-150px); opacity: 0; }
             100% { transform: translateY(0); opacity: 1; }
         }
         .menu-title {
-            font-size: 56px;
+            font-size: calc(56px * var(--font-scale, 1));
             font-weight: 800;
             color: #aa2222;
             text-shadow: 4px 4px 0px #330000, 8px 8px 0px #110000, 0 0 20px #ff4444;
@@ -108,25 +72,17 @@
             margin: 20px 0;
             animation: slideDownNoBounce 0.5s ease-out forwards;
             opacity: 0;
-            transform: translateY(-150px);
         }
-        .menu-title small {
-            font-size: 24px;
-            letter-spacing: 2px;
-        }
-        .menu-title.hide-title {
-            animation: slideUp 0.4s forwards;
-        }
-        @keyframes slideUp {
-            from { transform: translateY(0); opacity: 1; }
-            to { transform: translateY(-150px); opacity: 0; display: none; }
-        }
+        .menu-title.hide-title { animation: slideUp 0.4s forwards; }
+        @keyframes slideUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-150px); opacity: 0; display: none; } }
         
-        .menu-btn, .create-room, .room-item, .settings-item button, .back-btn, .ready-btn, .mode-btn {
+        .menu-btn, .create-room, .room-item, .settings-item button, .back-btn, .ready-btn, .mode-btn,
+        .btn, .auth-input, .custom-dialog button, .chat-input-area button, .link, .chat-close, .back-btn-game,
+        .results-screen button, .settings-save-btn {
             animation: slideDownBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
             opacity: 0;
         }
-        /* Специально для кнопок "назад" — такой же стиль, как у основных кнопок */
+        
         .back-btn {
             width: 220px;
             padding: 12px;
@@ -134,44 +90,277 @@
             background: rgba(70,0,0,0.8);
             backdrop-filter: blur(10px);
             border: 2px solid #ff4d4d;
-            font-size: 20px;
+            font-size: calc(20px * var(--font-scale, 1));
             font-weight: bold;
             text-align: center;
             cursor: pointer;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             color: white;
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 30;
-        }
-        /* Убираем старый стиль back-btn для экранов (кроме game-screen) */
-        .screen:not(#game-screen) .back-btn {
             position: relative;
-            top: auto;
-            right: auto;
             margin: 10px auto;
         }
         
-        .custom-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(20,0,0,0.95); backdrop-filter: blur(20px); border: 2px solid #8b0000; border-radius: 30px; padding: 25px; min-width: 300px; color: white; text-align: center; z-index: 10000; display: none; box-shadow: 0 0 60px #ff0000; }
-        .custom-dialog.active { display: block; animation: dialogAppear 0.3s; }
-        .custom-dialog input { width: 100%; padding: 12px; margin: 12px 0; background: #2a0000; border: 1px solid #8b0000; border-radius: 40px; color: white; }
+        .custom-dialog, .chat-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(20,0,0,0.95);
+            backdrop-filter: blur(20px);
+            border: 2px solid #8b0000;
+            border-radius: 30px;
+            padding: 25px;
+            min-width: 300px;
+            max-width: 90vw;
+            max-height: 80vh;
+            color: white;
+            text-align: center;
+            z-index: 10000;
+            display: none;
+            box-shadow: 0 0 60px #ff0000;
+            flex-direction: column;
+        }
+        .custom-dialog.active, .chat-dialog.active { display: flex; }
+        .chat-dialog {
+            width: 90%;
+            height: 80%;
+            padding: 20px;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin: 10px 0;
+            text-align: left;
+            background: rgba(0,0,0,0.5);
+            border-radius: 20px;
+            padding: 10px;
+            font-size: calc(14px * var(--font-scale, 1));
+        }
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .chat-input-area input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 40px;
+            border: 1px solid #8b0000;
+            background: #1e0000;
+            color: white;
+            font-size: calc(14px * var(--font-scale, 1));
+        }
+        .chat-input-area button {
+            padding: 12px 20px;
+            background: #8b0000;
+            border: none;
+            border-radius: 40px;
+            color: white;
+            cursor: pointer;
+        }
+        .chat-close {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .custom-dialog input, .custom-dialog button {
+            width: 100%;
+            padding: 12px;
+            margin: 12px 0;
+            background: #2a0000;
+            border: 1px solid #8b0000;
+            border-radius: 40px;
+            color: white;
+        }
+        .custom-dialog button { background: #8b0000; cursor: pointer; }
         .custom-dialog-buttons { display: flex; gap: 12px; justify-content: center; }
-        .custom-dialog button { padding: 8px 20px; background: #8b0000; border: none; border-radius: 40px; color: white; cursor: pointer; }
-        @keyframes dialogAppear { from { opacity: 0; transform: translate(-50%, -40%); } to { opacity: 1; transform: translate(-50%, -50%); } }
         
-        .auth-card { width: 90%; max-width: 380px; background: rgba(20,0,0,0.85); backdrop-filter: blur(15px); border-radius: 40px; padding: 30px; margin: auto; border: 2px solid #8b0000; }
-        .auth-card h1 { text-align: center; color: #ff4d4d; margin-bottom: 20px; font-size: 36px; text-shadow: 0 0 20px #ff0000; }
+        .auth-card {
+            width: 90%;
+            max-width: 380px;
+            background: rgba(20,0,0,0.85);
+            backdrop-filter: blur(15px);
+            border-radius: 40px;
+            padding: 30px;
+            margin: auto;
+            border: 2px solid #8b0000;
+        }
+        .auth-card h1 {
+            text-align: center;
+            color: #ff4d4d;
+            margin-bottom: 20px;
+            font-size: calc(36px * var(--font-scale, 1));
+            text-shadow: 0 0 20px #ff0000;
+        }
         .auth-step { display: none; }
         .auth-step.active { display: block; }
-        .auth-input, .btn { width: 100%; padding: 14px; margin: 8px 0; border-radius: 50px; border: none; background: #1e0000; color: white; font-size: 16px; border: 1px solid #8b0000; }
+        .auth-input, .btn {
+            width: 100%;
+            padding: 14px;
+            margin: 8px 0;
+            border-radius: 50px;
+            border: none;
+            background: #1e0000;
+            color: white;
+            font-size: calc(16px * var(--font-scale, 1));
+            border: 1px solid #8b0000;
+        }
         .btn { background: linear-gradient(145deg, #8b0000, #4a0000); cursor: pointer; font-weight: bold; }
         .btn:active { transform: scale(0.97); }
-        .link { color: #ffaaaa; text-align: center; margin-top: 12px; cursor: pointer; }
+        .link { color: #ffaaaa; text-align: center; margin-top: 12px; cursor: pointer; font-size: calc(14px * var(--font-scale, 1)); }
         
-        /* Главное меню без верхней полосы */
-        .menu-header { display: none; }
-        /* Информация об аккаунте в левом нижнем углу */
+        .menu-buttons { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; padding: 20px; margin-top: 20px; z-index: 20; }
+        .menu-btn {
+            width: 260px;
+            padding: 14px;
+            border-radius: 60px;
+            background: rgba(70,0,0,0.8);
+            backdrop-filter: blur(10px);
+            border: 2px solid #ff4d4d;
+            font-size: calc(24px * var(--font-scale, 1));
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .menu-btn.small { width: 220px; font-size: calc(20px * var(--font-scale, 1)); padding: 12px; }
+        
+        .rooms-container {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .room-item {
+            background: rgba(40,0,0,0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid #ff4d4d;
+            border-radius: 20px;
+            padding: 14px;
+            margin: 10px;
+            cursor: pointer;
+            font-size: calc(14px * var(--font-scale, 1));
+        }
+        .create-room {
+            background: rgba(80,0,0,0.9);
+            backdrop-filter: blur(10px);
+            border: 2px dashed #ff4d4d;
+            border-radius: 20px;
+            padding: 14px;
+            margin: 10px;
+            text-align: center;
+            font-size: calc(20px * var(--font-scale, 1));
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            margin: 0 10px;
+        }
+        .search-bar input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 40px;
+            border: 1px solid #ff4d4d;
+            background: #2a0000;
+            color: white;
+            font-size: calc(14px * var(--font-scale, 1));
+        }
+        .search-bar button {
+            padding: 12px 20px;
+            background: #5a0000;
+            border: none;
+            border-radius: 40px;
+            color: white;
+            cursor: pointer;
+            font-size: calc(14px * var(--font-scale, 1));
+        }
+        
+        .room-header {
+            padding: 12px;
+            display: flex;
+            gap: 12px;
+            background: #2a0000;
+            border-bottom: 2px solid #ff4d4d;
+        }
+        .room-header button {
+            background: #5a0000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 40px;
+            color: white;
+            cursor: pointer;
+            font-size: calc(14px * var(--font-scale, 1));
+        }
+        .room-info {
+            text-align: center;
+            padding: 12px;
+            font-size: calc(18px * var(--font-scale, 1));
+            color: #ffaaaa;
+        }
+        .players-grid {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 15px;
+            justify-content: center;
+            align-content: flex-start;
+        }
+        .player-slot {
+            background: #2a0a0a;
+            width: 110px;
+            padding: 12px;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid #8b0000;
+            font-size: calc(12px * var(--font-scale, 1));
+        }
+        .player-slot.ready { border-color: #5eff8c; box-shadow: 0 0 15px #2eff70; }
+        .player-slot .avatar {
+            width: 60px;
+            height: 60px;
+            background: #5a0000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: calc(28px * var(--font-scale, 1));
+            margin: 0 auto 8px;
+        }
+        .ready-btn {
+            background: #5a0000;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 50px;
+            font-size: calc(18px * var(--font-scale, 1));
+            margin: 20px auto;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .ready-btn.ready { background: #2f9e4a; }
+        .chat-toggle {
+            position: fixed;
+            bottom: 100px;
+            left: 20px;
+            width: 60px;
+            height: 60px;
+            background: #8b0000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            z-index: 30;
+            border: 2px solid #ff4d4d;
+            box-shadow: 0 0 15px #ff0000;
+        }
+        
         .account-info {
             position: fixed;
             bottom: 20px;
@@ -180,15 +369,11 @@
             backdrop-filter: blur(8px);
             padding: 8px 16px;
             border-radius: 30px;
-            font-size: 16px;
+            font-size: calc(16px * var(--font-scale, 1));
             font-weight: bold;
             color: #ffaaaa;
-            z-index: 25;
+            z-index: 1;
             pointer-events: none;
-            border: 1px solid #ff4d4d;
-        }
-        .account-info span {
-            color: #ffaa66;
         }
         .coins-block {
             position: fixed;
@@ -198,152 +383,138 @@
             backdrop-filter: blur(8px);
             padding: 16px 24px;
             border-radius: 60px;
-            font-size: 28px;
+            font-size: calc(28px * var(--font-scale, 1));
             font-weight: bold;
             color: #ffaa44;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .version {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: calc(12px * var(--font-scale, 1));
+            color: #888;
             z-index: 25;
             pointer-events: none;
-            border: 1px solid #ffaa44;
-            box-shadow: 0 0 15px rgba(255,170,68,0.3);
         }
-        .menu-buttons { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; padding: 20px; margin-top: 20px; }
-        .menu-btn { width: 260px; padding: 14px; border-radius: 60px; background: rgba(70,0,0,0.8); backdrop-filter: blur(10px); border: 2px solid #ff4d4d; font-size: 24px; font-weight: bold; text-align: center; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .menu-btn.small { width: 220px; font-size: 20px; padding: 12px; }
-        
-        .rooms-container { flex: 1; padding: 12px; overflow-y: auto; margin-top: 20px; }
-        .room-item, .create-room { background: rgba(40,0,0,0.85); backdrop-filter: blur(10px); border: 1px solid #ff4d4d; border-radius: 20px; padding: 14px; margin: 10px; cursor: pointer; }
-        .create-room { border: 2px dashed #ff4d4d; text-align: center; font-size: 20px; font-weight: bold; }
-        
-        .room-header { padding: 12px; display: flex; gap: 12px; background: #2a0000; border-bottom: 2px solid #ff4d4d; }
-        .room-header button { background: #5a0000; border: none; padding: 8px 16px; border-radius: 40px; color: white; cursor: pointer; }
-        .room-info { text-align: center; padding: 12px; font-size: 18px; color: #ffaaaa; }
-        .players-grid { flex: 1; display: flex; flex-wrap: wrap; gap: 12px; padding: 15px; justify-content: center; align-content: flex-start; }
-        .player-slot { background: #2a0a0a; width: 110px; padding: 12px; border-radius: 20px; text-align: center; border: 2px solid #8b0000; }
-        .player-slot.ready { border-color: #5eff8c; box-shadow: 0 0 15px #2eff70; }
-        .player-slot .avatar { width: 60px; height: 60px; background: #5a0000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 8px; }
-        .ready-btn { background: #5a0000; border: none; padding: 10px 30px; border-radius: 50px; font-size: 18px; margin: 12px; cursor: pointer; }
-        .ready-btn.ready { background: #2f9e4a; }
         
         #game-screen { background: #0a0a0a; }
-        #game-canvas { display: block; width: 100%; height: 100%; background: #1a1a2a; }
+        #game-canvas { display: block; width: 100%; height: 100%; background: #1a1a2a; cursor: none; }
         .game-ui { position: absolute; bottom: 30px; left: 30px; z-index: 20; }
         .joystick-area { width: 160px; height: 160px; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border-radius: 50%; border: 3px solid #ff4d4d; }
         .joystick-thumb { width: 65px; height: 65px; background: rgba(255,255,255,0.9); border-radius: 50%; position: relative; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-        .timer-display { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); padding: 8px 20px; border-radius: 40px; font-size: 24px; font-weight: bold; color: #ffaa66; border: 1px solid #ff4d4d; z-index: 20; }
-        .game-message { position: absolute; top: 85px; left: 15px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); padding: 6px 16px; border-radius: 25px; font-size: 16px; color: #ffaa88; z-index: 20; }
-        .back-btn-game { position: absolute; top: 15px; right: 15px; background: #4a0000; padding: 6px 16px; border-radius: 25px; cursor: pointer; z-index: 30; border: 1px solid #ff4d4d; font-size: 14px; }
+        .timer-display { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); padding: 8px 20px; border-radius: 40px; font-size: calc(24px * var(--font-scale, 1)); font-weight: bold; color: #ffaa66; border: 1px solid #ff4d4d; z-index: 20; }
+        .game-message { position: absolute; top: 85px; left: 15px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); padding: 6px 16px; border-radius: 25px; font-size: calc(16px * var(--font-scale, 1)); color: #ffaa88; z-index: 20; }
+        .back-btn-game { position: absolute; top: 15px; right: 15px; background: #4a0000; padding: 6px 16px; border-radius: 25px; cursor: pointer; z-index: 30; border: 1px solid #ff4d4d; font-size: calc(14px * var(--font-scale, 1)); }
         
-        .results-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(20px); z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; text-align: center; animation: fadeInUp 0.5s; }
-        .stats-card { background: rgba(30,0,0,0.8); border: 2px solid #ff4d4d; border-radius: 35px; padding: 25px 40px; }
-        .results-screen button { background: #8b0000; border: none; padding: 10px 30px; border-radius: 40px; font-size: 18px; color: white; cursor: pointer; margin-top: 15px; }
+        .results-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(20px);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            text-align: center;
+            animation: fadeInUp 0.5s;
+        }
+        .stats-card {
+            background: rgba(30,0,0,0.8);
+            border: 2px solid #ff4d4d;
+            border-radius: 35px;
+            padding: 25px 40px;
+            font-size: calc(18px * var(--font-scale, 1));
+        }
+        .results-screen button {
+            background: #8b0000;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 40px;
+            font-size: calc(18px * var(--font-scale, 1));
+            color: white;
+            cursor: pointer;
+            margin-top: 15px;
+        }
         .hidden { display: none !important; }
         .mode-select { display: flex; flex-direction: column; gap: 15px; padding: 15px; }
-        .mode-btn { background: linear-gradient(145deg, #4a0000, #2a0000); border: 2px solid #ff4d4d; border-radius: 50px; padding: 16px; font-size: 20px; font-weight: bold; text-align: center; cursor: pointer; }
-        .mode-btn:active { transform: scale(0.97); }
-        .settings-item { background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border-radius: 25px; padding: 12px 20px; margin: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .settings-item button { background: #5a0000; border: none; padding: 6px 20px; border-radius: 40px; color: white; cursor: pointer; }
-        .settings-item input { width: 150px; }
-        #countdown-timer { text-align: center; font-size: 40px; font-weight: bold; color: #ffaa44; margin: 15px; }
+        .mode-btn { background: linear-gradient(145deg, #4a0000, #2a0000); border: 2px solid #ff4d4d; border-radius: 50px; padding: 16px; font-size: calc(20px * var(--font-scale, 1)); font-weight: bold; text-align: center; cursor: pointer; }
+        .settings-item { background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border-radius: 25px; padding: 12px 20px; margin: 8px; display: flex; justify-content: space-between; align-items: center; font-size: calc(16px * var(--font-scale, 1)); }
+        .settings-item button, .settings-item input, .settings-item select { background: #5a0000; border: none; padding: 6px 20px; border-radius: 40px; color: white; cursor: pointer; font-size: calc(14px * var(--font-scale, 1)); }
+        .settings-item select { background: #5a0000; }
+        .settings-save-btn { background: #2f9e4a; color: white; padding: 12px 30px; border-radius: 40px; margin: 20px auto; display: block; width: 200px; text-align: center; cursor: pointer; font-size: calc(18px * var(--font-scale, 1)); }
+        #countdown-timer { text-align: center; font-size: calc(40px * var(--font-scale, 1)); font-weight: bold; color: #ffaa44; margin: 15px; }
         .click-disabled { pointer-events: none; opacity: 0.6; }
+        
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+            100% { transform: translateX(0); }
+        }
+        .shake-animation { animation: shake 0.2s ease-in-out 0s 2; }
     </style>
 </head>
 <body>
-    <div class="animated-bg">
-        <div class="fog-layer"></div>
-        <div class="fog-layer2"></div>
-        <div class="rays"></div>
-    </div>
-
+    <!-- Фон главного меню -->
+    <div class="menu-bg" id="menu-bg" style="background-image: url('https://raw.githubusercontent.com/Daniil160111/HIDE-TO-SURVIVE/refs/heads/main/1774029423179.png');"></div>
     <div id="custom-dialog" class="custom-dialog"><div id="dialog-title"></div><div id="dialog-content"></div><div class="custom-dialog-buttons" id="dialog-buttons"></div></div>
+    <div id="chat-dialog" class="chat-dialog"><div class="chat-close" onclick="closeChat()">✕</div><h3>ЧАТ КОМНАТЫ</h3><div id="chat-messages" class="chat-messages"></div><div class="chat-input-area"><input type="text" id="chat-input" placeholder="Сообщение..." maxlength="200"><button onclick="sendChatMessage()">Отправить</button></div></div>
     <div id="screen-overlay" class="screen-overlay"></div>
-    <audio id="bg-music" loop><source src="https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/menu.mp3"></audio>
-    <audio id="room-music" loop><source src="https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/Room.mp3"></audio>
-    <audio id="chase-music" loop><source src="https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/погоня.m4a"></audio>
-    <audio id="seek-music" loop><source src="https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/ищет.mp3"></audio>
-    <audio id="win-music"><source src="https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/14.%20Level%20Clear.mp3"></audio>
-    <audio id="lose-music"><source src="https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/11-46.%20Miss.mp3"></audio>
-    <audio id="results-music"><source src="https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/15.%20Results.mp3"></audio>
-    <audio id="button-sound"><source src="https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/6823b5dfbc46816.mp3"></audio>
+    <audio id="bg-music" loop preload="auto"></audio>
+    <audio id="room-music" loop preload="auto"></audio>
+    <audio id="chase-music" loop preload="auto"></audio>
+    <audio id="seek-music" loop preload="auto"></audio>
+    <audio id="win-music"></audio>
+    <audio id="lose-music"></audio>
+    <audio id="results-music"></audio>
+    <audio id="button-sound"></audio>
 
     <div id="app">
-        <!-- Auth -->
         <div id="auth-screen" class="screen active">
-            <div class="auth-card">
-                <h1>HIDE TO SURVIVE</h1>
-                <div id="auth-step-1" class="auth-step active">
-                    <input id="auth-nickname" class="auth-input" placeholder="Никнейм" maxlength="20">
-                    <button class="btn" onclick="nextAuthStep(2)">ПРОДОЛЖИТЬ</button>
-                </div>
-                <div id="auth-step-2" class="auth-step">
-                    <input type="password" id="auth-pass" class="auth-input" placeholder="Пароль">
-                    <input type="password" id="auth-pass-confirm" class="auth-input" placeholder="Подтвердите пароль">
-                    <button class="btn" id="auth-action-btn" onclick="handleAuth()">ЗАРЕГИСТРИРОВАТЬСЯ</button>
-                    <p class="link" onclick="goToAuthStep(1)">← Назад</p>
-                </div>
+            <div class="auth-card"><h1>HIDE TO SURVIVE</h1>
+                <div id="auth-step-1" class="auth-step active"><input id="auth-nickname" class="auth-input" placeholder="Никнейм" maxlength="20"><button class="btn" onclick="nextAuthStep(2)">ПРОДОЛЖИТЬ</button></div>
+                <div id="auth-step-2" class="auth-step"><input type="password" id="auth-pass" class="auth-input" placeholder="Пароль"><input type="password" id="auth-pass-confirm" class="auth-input" placeholder="Подтвердите пароль"><button class="btn" id="auth-action-btn" onclick="handleAuth()">ЗАРЕГИСТРИРОВАТЬСЯ</button><p class="link" onclick="goToAuthStep(1)">← Назад</p></div>
             </div>
         </div>
-
-        <!-- Menu -->
-        <div id="menu-screen" class="screen">
-            <div class="menu-title" id="game-title">HIDE TO SURVIVE<small>™</small></div>
-            <div class="menu-buttons">
-                <div class="menu-btn" onclick="showRoomList()">ИГРАТЬ</div>
-                <div class="menu-btn" onclick="showStream()">ТРАНСЛЯЦИЯ</div>
-                <div class="menu-btn small" onclick="showSettings()">НАСТРОЙКИ</div>
-            </div>
+        <div id="menu-screen" class="screen"><div class="menu-title" id="game-title">HIDE TO SURVIVE<small>™</small></div>
+            <div class="menu-buttons"><div class="menu-btn" onclick="showRoomList()">ИГРАТЬ</div><div class="menu-btn" onclick="showShop()">МАГАЗИН</div><div class="menu-btn small" onclick="showSettings()">НАСТРОЙКИ</div></div>
         </div>
-
-        <!-- Rooms -->
-        <div id="rooms-screen" class="screen">
-            <div class="back-btn" onclick="hideRooms()">← Назад</div>
-            <div style="padding: 20px 12px 12px;"><div class="create-room" id="create-room-btn" onclick="showModeSelect()">➕ СОЗДАТЬ КОМНАТУ</div><div id="rooms-list" class="rooms-container"></div></div>
-        </div>
-
-        <!-- Room lobby -->
-        <div id="room-screen" class="screen">
-            <div class="room-header"><button onclick="leaveRoom()">← Выйти</button><span id="room-name" style="flex:1; text-align:center; font-size:20px;">Комната</span><button onclick="copyRoomId()">Код</button></div>
+        <div id="rooms-screen" class="screen"><div class="back-btn" onclick="hideRooms()">← Назад</div><div class="search-bar"><input type="text" id="room-search" placeholder="Поиск по ID (никнейм создателя)"><button onclick="searchRooms()">Найти</button><button onclick="clearSearch()">Сброс</button></div><div id="rooms-list" class="rooms-container"></div><div class="create-room" style="margin: 10px; text-align: center;" onclick="showModeSelect()">➕ СОЗДАТЬ КОМНАТУ</div></div>
+        <div id="room-screen" class="screen"><div class="room-header"><button onclick="leaveRoom()">← Выйти</button><span id="room-name" style="flex:1; text-align:center; font-size:calc(20px * var(--font-scale, 1));">Комната</span><button onclick="copyRoomId()">Код</button></div>
             <div class="room-info"><span id="room-mode"></span> | <span id="room-players"></span> | <span id="room-host"></span></div>
             <div id="room-players-list" class="players-grid"></div><div style="text-align:center"><button id="ready-btn" class="ready-btn" onclick="toggleReady()">ГОТОВ</button></div>
-            <div id="countdown-timer"></div>
+            <div id="countdown-timer"></div><div class="chat-toggle" onclick="openChat()">💬</div>
         </div>
-
-        <!-- Game -->
-        <div id="game-screen" class="screen"><canvas id="game-canvas"></canvas>
-            <div class="game-ui"><div id="joystick" class="joystick-area"><div id="joystick-thumb" class="joystick-thumb"></div></div></div>
-            <div id="game-timer" class="timer-display"></div><div id="game-message" class="game-message"></div>
-            <div class="back-btn-game" onclick="leaveGame()">Выйти</div>
-        </div>
-
-        <!-- Results -->
-        <div id="results-screen" class="results-screen hidden"><h1>РЕЗУЛЬТАТЫ</h1><div class="stats-card" id="stats"></div><div style="font-size:12px;">Нажмите в любом месте</div><button onclick="closeResults()">В ГЛАВНОЕ МЕНЮ</button></div>
-
-        <!-- Stream -->
-        <div id="stream-screen" class="screen">
-            <div class="back-btn" onclick="hideStream()">← Назад</div>
-            <div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:28px;">🎥 ТРАНСЛЯЦИЯ СКОРО...</div>
-        </div>
-
-        <!-- Settings -->
-        <div id="settings-screen" class="screen">
-            <div class="back-btn" onclick="hideSettings()">← Назад</div>
-            <div style="padding: 70px 12px 12px;">
-                <div class="settings-item"><span>Сменить пароль</span><button onclick="changePassword()">Изменить</button></div>
-                <div class="settings-item"><span>Сменить никнейм</span><button onclick="changeNickname()">Изменить</button></div>
-                <div class="settings-item"><span>Громкость музыки</span>
-                    <input type="range" id="volume-slider" min="0" max="100" value="80" step="5" onchange="setVolume(this.value)">
-                </div>
-                <div class="settings-item"><span>Выйти</span><button onclick="logout()">Выход</button></div>
-                <div class="settings-item"><span>Удалить аккаунт</span><button onclick="deleteAccount()">Удалить</button></div>
-            </div>
-        </div>
+        <div id="game-screen" class="screen"><canvas id="game-canvas"></canvas><div class="game-ui"><div id="joystick" class="joystick-area"><div id="joystick-thumb" class="joystick-thumb"></div></div></div><div id="game-timer" class="timer-display"></div><div id="game-message" class="game-message"></div><div class="back-btn-game" onclick="leaveGame()">Выйти</div></div>
+        <div id="results-screen" class="results-screen hidden"><h1>РЕЗУЛЬТАТЫ</h1><div class="stats-card" id="stats"></div><div style="font-size:calc(12px * var(--font-scale, 1));">Нажмите в любом месте</div><button onclick="closeResults()">В ГЛАВНОЕ МЕНЮ</button></div>
+        <div id="shop-screen" class="screen"><div class="back-btn" onclick="hideShop()">← Назад</div><div style="display:flex; align-items:center; justify-content:center; height:100%; font-size:calc(28px * var(--font-scale, 1));">🛒 МАГАЗИН СКОРО...</div></div>
+        <div id="settings-screen" class="screen"><div class="back-btn" onclick="cancelSettings()">← Назад</div><div style="padding: 70px 12px 12px;">
+            <div class="settings-item"><span>Громкость музыки</span><input type="range" id="volume-slider" min="0" max="100" value="80" step="5"></div>
+            <div class="settings-item"><span>Максимальное затемнение (%)</span><input type="range" id="darkness-slider" min="0" max="30" value="30" step="5"></div>
+            <div class="settings-item"><span>Скрывать плохие слова в чате</span><input type="checkbox" id="bad-words-filter"></div>
+            <div class="settings-item"><span>Размер шрифта (1-10)</span><input type="range" id="font-size-slider" min="1" max="10" value="5" step="1"></div>
+            <div class="settings-item"><span>Сменить пароль</span><button id="change-password-btn">Изменить</button></div>
+            <div class="settings-item"><span>Сменить никнейм</span><button id="change-nickname-btn">Изменить</button></div>
+            <div class="settings-item"><span>Выйти</span><button id="logout-btn">Выход</button></div>
+            <div class="settings-item"><span>Удалить аккаунт</span><button id="delete-account-btn">Удалить</button></div>
+            <div class="settings-save-btn" onclick="saveSettings()">💾 СОХРАНИТЬ</div>
+        </div></div>
     </div>
 
-    <!-- Информация об аккаунте и монетах вне экранов, чтобы была всегда видна -->
     <div class="account-info" id="account-info">Аккаунт: <span id="account-nick">Загрузка...</span></div>
     <div class="coins-block" id="coins-block">💰 <span id="coins-value">0</span></div>
+    <div class="version">версия 1.1.6</div>
 
     <script>
-        // ================== FIREBASE ==================
+        // Firebase config
         const firebaseConfig = {
             apiKey: "AIzaSyBU5us_We8l-Yq13lil9h1JrB9EMCdKOtk",
             authDomain: "messenger-e7f24.firebaseapp.com",
@@ -354,142 +525,106 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const rtdb = firebase.database();
-        const GAME_USERS = 'game_users_final_v5';
-        const ROOMS = 'game_rooms_final_v5';
+        const GAME_USERS = 'game_users_final_v11';
+        const ROOMS = 'game_rooms_final_v11';
+        const CHATS = 'room_chats';
 
-        // ================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==================
+        // === Глобальные переменные ===
         let currentUser = null, currentRoomId = null, currentRoomData = null, roomListener = null;
         let gameLoop = null, myPlayerId = null;
         let myPos = { x: 0, y: 0 };
+        let targetPos = { x: 0, y: 0 }; // для плавного движения
         let joystickVector = { x: 0, y: 0 }, joystickActive = false;
         let players = {};
         let isTransitioning = false, gameActive = false, gamePhase = 'hide';
         let hideTimer = 30, seekTimer = 270, isSeeker = false, chaseActive = false, chaseTimeout = null;
         let currentMusic = null, countdownInterval = null, isCreatingRoom = false;
-        let canvas, ctx, map = [], cellSize = 20, mapWidth = 80, mapHeight = 60;
-
-        // Аудио
+        let canvas, ctx, map = [], cellSize = 30, mapWidth = 50, mapHeight = 50; // 50x50 сетка
+        let chatListener = null;
+        let lastButtonClick = 0;
+        let fontScale = 1;
+        let caughtPlayers = []; // никнеймы пойманных игроков
+        let lastPositions = {}; // для интерполяции
+        
+        // Аудио элементы
         let bgMusic = document.getElementById('bg-music'), roomMusic = document.getElementById('room-music');
         let chaseMusic = document.getElementById('chase-music'), seekMusic = document.getElementById('seek-music');
         let winMusic = document.getElementById('win-music'), loseMusic = document.getElementById('lose-music');
         let resultsMusic = document.getElementById('results-music'), buttonSound = document.getElementById('button-sound');
         let overlay = document.getElementById('screen-overlay');
-        let volumeSlider = document.getElementById('volume-slider');
-
-        // Кулдаун кнопок (1 секунда)
-        let lastButtonClick = 0;
-        function withCooldown(func) {
-            return function(...args) {
-                const now = Date.now();
-                if (now - lastButtonClick < 1000) return;
-                lastButtonClick = now;
-                return func.apply(this, args);
-            };
+        
+        // Настройки
+        let pendingSettings = {
+            musicVolume: 80,
+            darkness: 30,
+            badWordsFilter: false,
+            fontSize: 5
+        };
+        
+        // === Функции обратной связи ===
+        function vibrateShort() { if (navigator.vibrate) navigator.vibrate(30); }
+        function vibrateTriple() { if (navigator.vibrate) navigator.vibrate([50, 50, 50, 50, 50]); }
+        function shakeUI() {
+            document.body.classList.add('shake-animation');
+            setTimeout(() => document.body.classList.remove('shake-animation'), 400);
         }
-
-        // ================== ГРОМКОСТЬ ==================
-        function setVolume(value) {
-            let vol = value / 100;
-            bgMusic.volume = vol;
-            roomMusic.volume = vol;
-            chaseMusic.volume = vol;
-            seekMusic.volume = vol;
-            if (currentMusic) currentMusic.volume = vol;
-            localStorage.setItem('music_volume', vol);
+        function errorFeedback() {
+            vibrateTriple();
+            shakeUI();
         }
-        function loadVolume() {
-            let saved = localStorage.getItem('music_volume');
-            if (saved !== null) {
-                let vol = parseFloat(saved);
-                bgMusic.volume = vol;
-                roomMusic.volume = vol;
-                chaseMusic.volume = vol;
-                seekMusic.volume = vol;
-                if (volumeSlider) volumeSlider.value = vol * 100;
-            } else {
-                bgMusic.volume = 0.8;
-                roomMusic.volume = 0.8;
-                chaseMusic.volume = 0.8;
-                seekMusic.volume = 0.8;
-                if (volumeSlider) volumeSlider.value = 80;
+        
+        // === Музыка ===
+        function createGaplessAudio(src, element) {
+            element.src = src;
+            element.load();
+            element.addEventListener('timeupdate', () => {
+                if (element.currentTime > element.duration - 0.1) element.currentTime = 0.1;
+            });
+        }
+        function initAudio() {
+            createGaplessAudio('https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/menu.mp3', bgMusic);
+            createGaplessAudio('https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/Room.mp3', roomMusic);
+            createGaplessAudio('https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/погоня.m4a', chaseMusic);
+            createGaplessAudio('https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/ищет.mp3', seekMusic);
+            winMusic.src = 'https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/14.%20Level%20Clear.mp3';
+            loseMusic.src = 'https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/11-46.%20Miss.mp3';
+            resultsMusic.src = 'https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/15.%20Results.mp3';
+            buttonSound.src = 'https://github.com/Daniil160111/HIDE-TO-SURVIVE/raw/refs/heads/main/6823b5dfbc46816.mp3';
+        }
+        function fadeAudioSteps(element, target, duration = 800, steps = 10) { if (!element) return; const start = element.volume; const diff = target - start; const stepTime = duration / steps; let step = 0; const interval = setInterval(() => { step++; const progress = step / steps; element.volume = start + diff * progress; if (step >= steps) { clearInterval(interval); element.volume = target; } }, stepTime); }
+        function fadeToSubMenu() { fadeAudioSteps(bgMusic, 0.3, 400, 10); }
+        function fadeToMenu() { fadeAudioSteps(bgMusic, 0.8, 400, 10); }
+        function switchToRoomMusic() { fadeAudioSteps(bgMusic, 0, 1000, 10); setTimeout(() => { bgMusic.pause(); roomMusic.currentTime = 0; roomMusic.play().catch(() => {}); fadeAudioSteps(roomMusic, 0.8, 1000, 10); }, 1000); }
+        function switchToMenuMusic() { fadeAudioSteps(roomMusic, 0, 1000, 10); setTimeout(() => { roomMusic.pause(); bgMusic.play().catch(() => {}); fadeAudioSteps(bgMusic, 0.8, 1000, 10); }, 1000); }
+        function switchMusic(newMusic, fadeOut = 500, fadeIn = 500) { if (currentMusic && currentMusic !== newMusic) { fadeAudioSteps(currentMusic, 0, fadeOut, 10); setTimeout(() => { if (currentMusic) currentMusic.pause(); currentMusic = newMusic; if (currentMusic) { currentMusic.currentTime = 0; currentMusic.play().catch(() => {}); fadeAudioSteps(currentMusic, 0.7, fadeIn, 10); } }, fadeOut); } else if (!currentMusic && newMusic) { currentMusic = newMusic; currentMusic.play().catch(() => {}); fadeAudioSteps(currentMusic, 0.7, fadeIn, 10); } }
+        function playButtonSound() { if (buttonSound) { buttonSound.currentTime = 0; buttonSound.play().catch(() => {}); vibrateShort(); } }
+        function setVolume(value) { let vol = value / 100; bgMusic.volume = vol; roomMusic.volume = vol; chaseMusic.volume = vol; seekMusic.volume = vol; if (currentMusic) currentMusic.volume = vol; }
+        function setDarkness(value) { let opacity = value / 100; overlay.style.backgroundColor = `rgba(0,0,0,${opacity})`; }
+        function setFontSize(value) { fontScale = value / 5; document.documentElement.style.setProperty('--font-scale', fontScale); }
+        function applyPendingSettings() {
+            setVolume(pendingSettings.musicVolume);
+            setDarkness(pendingSettings.darkness);
+            setFontSize(pendingSettings.fontSize);
+        }
+        
+        // === Словарь плохих слов ===
+        const badWords = [
+            /хуй/gi, /пизд/gi, /бля/gi, /еба/gi, /ёба/gi, /залуп/gi, /мудак/gi, /гнид/gi, /уебок/gi, /пидор/gi, /гей/gi, /лох/gi, /сука/gi, /сучк/gi, /шлюх/gi, /курв/gi, /бзд/gi, /дерьм/gi, /говн/gi, /срал/gi, /срет/gi, /жоп/gi, /очко/gi, /анальн/gi, /секс/gi, /трах/gi, /взъе/gi, /выеб/gi, /долбо/gi, /дебил/gi, /кретин/gi, /идиот/gi, /туп/gi, /урод/gi, /скот/gi, /сволоч/gi, /мерзав/gi, /твар/gi, /ублюд/gi, /вырод/gi, /падл/gi, /гад/gi, /хер/gi, /хрен/gi, /член/gi, /вагин/gi, /письк/gi, /сиськ/gi, /сосать/gi, /лизать/gi, /срать/gi, /ссать/gi, /ссат/gi, /моча/gi, /какаш/gi, /экскремент/gi
+        ];
+        function filterBadWords(text) {
+            if (!pendingSettings.badWordsFilter) return text;
+            let filtered = text;
+            for (let pattern of badWords) {
+                filtered = filtered.replace(pattern, match => '*'.repeat(match.length));
             }
+            return filtered;
         }
-
-        // ================== ПЛАВНЫЕ СТУПЕНЧАТЫЕ ПЕРЕХОДЫ ==================
-        function fadeAudioSteps(element, target, duration = 800, steps = 10) {
-            if (!element) return;
-            const start = element.volume;
-            const diff = target - start;
-            const stepTime = duration / steps;
-            let step = 0;
-            const interval = setInterval(() => {
-                step++;
-                const progress = step / steps;
-                element.volume = start + diff * progress;
-                if (step >= steps) {
-                    clearInterval(interval);
-                    element.volume = target;
-                }
-            }, stepTime);
-        }
-
-        function fadeToSubMenu() {
-            fadeAudioSteps(bgMusic, 0.3, 400, 10);
-        }
-
-        function fadeToMenu() {
-            fadeAudioSteps(bgMusic, 0.8, 400, 10);
-        }
-
-        function switchToRoomMusic() {
-            fadeAudioSteps(bgMusic, 0, 1000, 10);
-            setTimeout(() => {
-                bgMusic.pause();
-                roomMusic.currentTime = 0;
-                roomMusic.play().catch(() => {});
-                fadeAudioSteps(roomMusic, 0.8, 1000, 10);
-            }, 1000);
-        }
-
-        function switchToMenuMusic() {
-            fadeAudioSteps(roomMusic, 0, 1000, 10);
-            setTimeout(() => {
-                roomMusic.pause();
-                bgMusic.play().catch(() => {});
-                fadeAudioSteps(bgMusic, 0.8, 1000, 10);
-            }, 1000);
-        }
-
-        function switchMusic(newMusic, fadeOut = 500, fadeIn = 500) {
-            if (currentMusic && currentMusic !== newMusic) {
-                fadeAudioSteps(currentMusic, 0, fadeOut, 10);
-                setTimeout(() => {
-                    if (currentMusic) currentMusic.pause();
-                    currentMusic = newMusic;
-                    if (currentMusic) {
-                        currentMusic.currentTime = 0;
-                        currentMusic.play().catch(() => {});
-                        fadeAudioSteps(currentMusic, 0.7, fadeIn, 10);
-                    }
-                }, fadeOut);
-            } else if (!currentMusic && newMusic) {
-                currentMusic = newMusic;
-                currentMusic.play().catch(() => {});
-                fadeAudioSteps(currentMusic, 0.7, fadeIn, 10);
-            }
-        }
-
-        function playButtonSound() {
-            if (buttonSound) {
-                buttonSound.currentTime = 0;
-                buttonSound.play().catch(() => {});
-            }
-        }
-
-        // ================== БЛОКИРОВКА КНОПОК ==================
+        
+        // === Блокировка и переходы ===
+        function withCooldown(func) { return function(...args) { const now = Date.now(); if (now - lastButtonClick < 800) return; lastButtonClick = now; return func.apply(this, args); }; }
         function lockButtons() { document.getElementById('app').classList.add('transition-lock'); }
         function unlockButtons() { document.getElementById('app').classList.remove('transition-lock'); }
-
+        
         async function transitionTo(screenName, targetMusic) {
             if (isTransitioning) return;
             isTransitioning = true;
@@ -497,124 +632,355 @@
             let cur = document.querySelector('.screen.active');
             let target = document.getElementById(`${screenName}-screen`);
             if (!target) { unlockButtons(); isTransitioning = false; return; }
-            
-            // Скрыть/показать заголовок главного меню
             let title = document.getElementById('game-title');
-            if (screenName === 'menu') {
-                if (title) title.classList.remove('hide-title');
-            } else {
-                if (title && !title.classList.contains('hide-title')) title.classList.add('hide-title');
-            }
-
-            if (targetMusic === 'room') {
-                overlay.classList.add('dark');
-                if (currentMusic === bgMusic) fadeAudioSteps(bgMusic, 0, 800, 10);
-                await new Promise(r => setTimeout(r, 800));
-                switchMusic(roomMusic);
-            } else if (targetMusic === 'submenu') {
-                overlay.classList.add('dark');
-                if (currentMusic === bgMusic) fadeToSubMenu();
-                await new Promise(r => setTimeout(r, 400));
-            } else {
-                overlay.classList.remove('dark');
-                if (currentMusic === roomMusic) {
-                    fadeAudioSteps(roomMusic, 0, 800, 10);
-                    await new Promise(r => setTimeout(r, 800));
-                    switchMusic(bgMusic);
-                } else if (currentMusic === bgMusic && targetMusic === 'menu') {
-                    fadeToMenu();
-                } else {
-                    switchMusic(bgMusic, 400, 800);
-                }
-            }
+            if (screenName === 'menu') { if (title) title.classList.remove('hide-title'); } else { if (title && !title.classList.contains('hide-title')) title.classList.add('hide-title'); }
+            if (targetMusic === 'room') { overlay.classList.add('dark'); if (currentMusic === bgMusic) fadeAudioSteps(bgMusic, 0, 800, 10); await new Promise(r => setTimeout(r, 800)); switchMusic(roomMusic); }
+            else if (targetMusic === 'submenu') { overlay.classList.add('dark'); if (currentMusic === bgMusic) fadeToSubMenu(); await new Promise(r => setTimeout(r, 400)); }
+            else { overlay.classList.remove('dark'); if (currentMusic === roomMusic) { fadeAudioSteps(roomMusic, 0, 800, 10); await new Promise(r => setTimeout(r, 800)); switchMusic(bgMusic); } else if (currentMusic === bgMusic && targetMusic === 'menu') { fadeToMenu(); } else { switchMusic(bgMusic, 400, 800); } }
             if (cur) cur.classList.remove('active');
             target.classList.add('active');
             setTimeout(() => { unlockButtons(); isTransitioning = false; }, 150);
         }
-
-        // ================== ДИАЛОГИ ==================
-        function showDialog(title, content, buttons) {
-            return new Promise((resolve) => {
-                const d = document.getElementById('custom-dialog');
-                document.getElementById('dialog-title').innerHTML = title;
-                document.getElementById('dialog-content').innerHTML = content;
-                const btnsDiv = document.getElementById('dialog-buttons');
-                btnsDiv.innerHTML = '';
-                buttons.forEach(btn => {
-                    const b = document.createElement('button');
-                    b.textContent = btn.text;
-                    b.onclick = () => { d.classList.remove('active'); resolve(btn.value); };
-                    btnsDiv.appendChild(b);
-                });
-                d.classList.add('active');
-            });
-        }
+        
+        // === Диалоги ===
+        function showDialog(title, content, buttons) { return new Promise((resolve) => { const d = document.getElementById('custom-dialog'); document.getElementById('dialog-title').innerHTML = title; document.getElementById('dialog-content').innerHTML = content; const btnsDiv = document.getElementById('dialog-buttons'); btnsDiv.innerHTML = ''; buttons.forEach(btn => { const b = document.createElement('button'); b.textContent = btn.text; b.onclick = () => { d.classList.remove('active'); resolve(btn.value); }; btnsDiv.appendChild(b); }); d.classList.add('active'); }); }
         window.alert = (m) => showDialog('Внимание', m, [{ text: 'OK', value: 'ok' }]);
         window.confirm = (m) => showDialog('Подтверждение', m, [{ text: 'Нет', value: false }, { text: 'Да', value: true }]);
         window.prompt = (m, d) => showDialog('Ввод', `<input id="prompt-input" value="${d}">`, [{ text: 'Отмена', value: null }, { text: 'OK', value: 'ok' }]).then(res => res === 'ok' ? document.getElementById('prompt-input').value : null);
-
-        // ================== АВТОРИЗАЦИЯ ==================
+        
+        // === Авторизация ===
         let tempNickname = '';
-        function nextAuthStep(step) { playButtonSound(); if (step === 2) { const nickname = document.getElementById('auth-nickname').value.trim(); if (!nickname) return alert('Введите никнейм'); if (nickname.length > 20) return alert('Максимум 20 символов'); tempNickname = nickname; db.collection(GAME_USERS).where('nickname', '==', nickname).get().then(snap => { document.getElementById('auth-step-1').classList.remove('active'); document.getElementById('auth-step-2').classList.add('active'); if (!snap.empty) { document.getElementById('auth-pass-confirm').style.display = 'none'; document.getElementById('auth-action-btn').textContent = 'Войти'; } else { document.getElementById('auth-pass-confirm').style.display = 'block'; document.getElementById('auth-action-btn').textContent = 'Зарегистрироваться'; } }); } }
+        function nextAuthStep(step) { playButtonSound(); if (step === 2) { const nickname = document.getElementById('auth-nickname').value.trim(); if (!nickname) return errorFeedback(), alert('Введите никнейм'); if (nickname.length > 20) return errorFeedback(), alert('Максимум 20 символов'); tempNickname = nickname; db.collection(GAME_USERS).where('nickname', '==', nickname).get().then(snap => { document.getElementById('auth-step-1').classList.remove('active'); document.getElementById('auth-step-2').classList.add('active'); if (!snap.empty) { document.getElementById('auth-pass-confirm').style.display = 'none'; document.getElementById('auth-action-btn').textContent = 'Войти'; } else { document.getElementById('auth-pass-confirm').style.display = 'block'; document.getElementById('auth-action-btn').textContent = 'Зарегистрироваться'; } }); } }
         function goToAuthStep(step) { playButtonSound(); document.querySelectorAll('.auth-step').forEach(s => s.classList.remove('active')); document.getElementById(`auth-step-${step}`).classList.add('active'); }
-        async function handleAuth() { playButtonSound(); const pass = document.getElementById('auth-pass').value; const passConfirm = document.getElementById('auth-pass-confirm').value; const isLogin = document.getElementById('auth-pass-confirm').style.display === 'none'; if (!pass) return alert('Введите пароль'); if (!isLogin) { if (pass !== passConfirm) return alert('Пароли не совпадают'); if (pass.length > 20 || !/^[a-zA-Z0-9._-]+$/.test(pass)) return alert('Недопустимый пароль'); let playerId; do { playerId = Math.floor(100000000 + Math.random() * 900000000).toString(); } while ((await db.collection(GAME_USERS).where('playerId', '==', playerId).get()).size > 0); currentUser = { nickname: tempNickname, password: pass, playerId: playerId, coins: 100, skin: 'default', createdAt: Date.now() }; await db.collection(GAME_USERS).doc(tempNickname).set(currentUser); completeLogin(); } else { const userDoc = await db.collection(GAME_USERS).doc(tempNickname).get(); if (!userDoc.exists) return alert('Аккаунт не найден'); if (userDoc.data().password !== pass) return alert('Неверный пароль'); currentUser = userDoc.data(); currentUser.nickname = tempNickname; completeLogin(); } }
-        function completeLogin() { localStorage.setItem('hns_user', JSON.stringify(currentUser)); document.getElementById('auth-screen').classList.remove('active'); document.getElementById('menu-screen').classList.add('active'); document.getElementById('account-nick').textContent = currentUser.nickname; document.getElementById('coins-value').textContent = currentUser.coins; loadVolume(); switchMusic(bgMusic); }
-
-        // ================== КОМНАТЫ (оставлены без изменений, только обёрнуты в withCooldown) ==================
-        function showModeSelect() { if (isCreatingRoom) return; let div = document.createElement('div'); div.className = 'mode-select'; div.innerHTML = `<div class="mode-btn" id="mode-normal">👻 ПРЯТКИ-ДОГОНЯЛКИ<br><small>от 2 до 10 игроков</small></div><div class="mode-btn" id="mode-infection">🧟 ПРЯТКИ-ЗАРАЖЕНИЕ<br><small>от 4 до 10 игроков</small></div>`; showDialog('Выберите режим', div.outerHTML, [{ text: 'Отмена', value: null }]).then(res => { if (res === null) return; createRoomWithMode(res === 'mode-normal' ? 'normal' : 'infection'); }); setTimeout(() => { document.getElementById('mode-normal')?.addEventListener('click', () => { document.getElementById('custom-dialog').classList.remove('active'); createRoomWithMode('normal'); }); document.getElementById('mode-infection')?.addEventListener('click', () => { document.getElementById('custom-dialog').classList.remove('active'); createRoomWithMode('infection'); }); }, 100); }
-        async function createRoomWithMode(mode) { if (isCreatingRoom) return; isCreatingRoom = true; playButtonSound(); let btn = document.getElementById('create-room-btn'); if (btn) btn.classList.add('click-disabled'); let roomData = { status: 'waiting', createdAt: Date.now(), players: [currentUser.nickname], ready: [currentUser.nickname], mode: mode, minPlayers: mode === 'infection' ? 4 : 2, maxPlayers: 10, host: currentUser.nickname, gameStarted: false, countdownActive: false }; let ref = await db.collection(ROOMS).add(roomData); isCreatingRoom = false; if (btn) btn.classList.remove('click-disabled'); joinRoom(ref.id); }
+        async function handleAuth() { playButtonSound(); const pass = document.getElementById('auth-pass').value; const passConfirm = document.getElementById('auth-pass-confirm').value; const isLogin = document.getElementById('auth-pass-confirm').style.display === 'none'; if (!pass) return errorFeedback(), alert('Введите пароль'); if (!isLogin) { if (pass !== passConfirm) return errorFeedback(), alert('Пароли не совпадают'); if (pass.length > 20 || !/^[a-zA-Z0-9._-]+$/.test(pass)) return errorFeedback(), alert('Недопустимый пароль'); let playerId; do { playerId = Math.floor(100000000 + Math.random() * 900000000).toString(); } while ((await db.collection(GAME_USERS).where('playerId', '==', playerId).get()).size > 0); currentUser = { nickname: tempNickname, password: pass, playerId: playerId, coins: 100, skin: 'default', createdAt: Date.now() }; await db.collection(GAME_USERS).doc(tempNickname).set(currentUser); completeLogin(); } else { const userDoc = await db.collection(GAME_USERS).doc(tempNickname).get(); if (!userDoc.exists) return errorFeedback(), alert('Аккаунт не найден'); if (userDoc.data().password !== pass) return errorFeedback(), alert('Неверный пароль'); currentUser = userDoc.data(); currentUser.nickname = tempNickname; completeLogin(); } }
+        function completeLogin() { localStorage.setItem('hns_user', JSON.stringify(currentUser)); document.getElementById('auth-screen').classList.remove('active'); document.getElementById('menu-screen').classList.add('active'); document.getElementById('account-nick').textContent = currentUser.nickname; document.getElementById('coins-value').textContent = currentUser.coins; initAudio(); applyPendingSettings(); switchMusic(bgMusic); restoreState(); }
+        
+        // === Сохранение настроек ===
+        function loadSettingsUI() {
+            document.getElementById('volume-slider').value = pendingSettings.musicVolume;
+            document.getElementById('darkness-slider').value = pendingSettings.darkness;
+            document.getElementById('bad-words-filter').checked = pendingSettings.badWordsFilter;
+            document.getElementById('font-size-slider').value = pendingSettings.fontSize;
+        }
+        function saveSettings() {
+            pendingSettings.musicVolume = parseInt(document.getElementById('volume-slider').value);
+            pendingSettings.darkness = parseInt(document.getElementById('darkness-slider').value);
+            pendingSettings.badWordsFilter = document.getElementById('bad-words-filter').checked;
+            pendingSettings.fontSize = parseInt(document.getElementById('font-size-slider').value);
+            applyPendingSettings();
+            localStorage.setItem('game_settings', JSON.stringify(pendingSettings));
+            alert('Настройки сохранены');
+            playButtonSound();
+        }
+        function cancelSettings() {
+            let saved = localStorage.getItem('game_settings');
+            if (saved) pendingSettings = JSON.parse(saved);
+            else pendingSettings = { musicVolume: 80, darkness: 30, badWordsFilter: false, fontSize: 5 };
+            applyPendingSettings();
+            transitionTo('menu', 'menu');
+        }
+        function loadSettingsFromStorage() {
+            let saved = localStorage.getItem('game_settings');
+            if (saved) pendingSettings = JSON.parse(saved);
+            else pendingSettings = { musicVolume: 80, darkness: 30, badWordsFilter: false, fontSize: 5 };
+            applyPendingSettings();
+        }
+        
+        // === 2D КАРТА (психбольница) ===
+        function buildMap() {
+            map = Array(mapHeight).fill().map(() => Array(mapWidth).fill(0));
+            // стены по краям
+            for (let i = 0; i < mapWidth; i++) { map[0][i] = 1; map[mapHeight-1][i] = 1; }
+            for (let i = 0; i < mapHeight; i++) { map[i][0] = 1; map[i][mapWidth-1] = 1; }
+            // случайные стены внутри
+            for (let i = 0; i < 300; i++) {
+                let x = Math.floor(Math.random() * (mapWidth-2)) + 1;
+                let y = Math.floor(Math.random() * (mapHeight-2)) + 1;
+                if (map[y][x] === 0) map[y][x] = 1;
+            }
+            // коридоры
+            for (let i = 0; i < 150; i++) {
+                let x = Math.floor(Math.random() * (mapWidth-2)) + 1;
+                let y = Math.floor(Math.random() * (mapHeight-2)) + 1;
+                map[y][x] = 0;
+            }
+        }
+        
+        function drawMap() {
+            for (let y = 0; y < mapHeight; y++) {
+                for (let x = 0; x < mapWidth; x++) {
+                    if (map[y][x] === 1) {
+                        ctx.fillStyle = "#aaaaaa";
+                        ctx.fillRect(x*cellSize, y*cellSize, cellSize, cellSize);
+                        ctx.strokeStyle = "#888888";
+                        ctx.strokeRect(x*cellSize, y*cellSize, cellSize, cellSize);
+                    } else {
+                        ctx.fillStyle = "#dddddd";
+                        ctx.fillRect(x*cellSize, y*cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+            // мигающие лампы (случайные точки)
+            if (Math.random() < 0.05) {
+                for (let i = 0; i < 10; i++) {
+                    let x = Math.floor(Math.random() * mapWidth);
+                    let y = Math.floor(Math.random() * mapHeight);
+                    ctx.fillStyle = "#ffaa44";
+                    ctx.beginPath();
+                    ctx.arc(x*cellSize + cellSize/2, y*cellSize + cellSize/2, cellSize/3, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            }
+        }
+        
+        function drawPlayer(x, y, color, name, isSeekerFlag) {
+            ctx.beginPath();
+            ctx.arc(x, y, cellSize*0.35, 0, Math.PI*2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = "#000";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = "#000";
+            ctx.font = `${Math.max(12, cellSize*0.4)}px Arial`;
+            ctx.shadowColor = "white";
+            ctx.fillText(name, x-ctx.measureText(name).width/2, y-12);
+            ctx.shadowColor = "transparent";
+        }
+        
+        function render() {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawMap();
+            for (let id in players) {
+                if (id === myPlayerId) continue;
+                let p = players[id];
+                if (caughtPlayers.includes(p.nickname)) continue; // не рисуем пойманных
+                drawPlayer(p.x, p.y, p.isSeeker ? "#ff5555" : "#55ff55", p.nickname, p.isSeeker);
+            }
+            if (!caughtPlayers.includes(currentUser.nickname)) {
+                drawPlayer(myPos.x, myPos.y, isSeeker ? "#ff5555" : "#55ff55", currentUser.nickname, isSeeker);
+            }
+        }
+        
+        function checkCollision(x, y) {
+            let gridX = Math.floor(x / cellSize);
+            let gridY = Math.floor(y / cellSize);
+            if (gridX < 0 || gridX >= mapWidth || gridY < 0 || gridY >= mapHeight) return true;
+            return map[gridY][gridX] === 1;
+        }
+        
+        function lineOfSight(x1, y1, x2, y2) {
+            let steps = Math.max(Math.abs(x2-x1), Math.abs(y2-y1)) / cellSize * 2;
+            for (let i = 0; i <= steps; i++) {
+                let t = i / steps;
+                let x = x1 + (x2-x1)*t;
+                let y = y1 + (y2-y1)*t;
+                if (checkCollision(x, y)) return false;
+            }
+            return true;
+        }
+        
+        // === Комнаты (сокращённо, но полностью рабочие) ===
+        function showModeSelect() { 
+            playButtonSound();
+            if (isCreatingRoom) return; 
+            let div = document.createElement('div'); 
+            div.className = 'mode-select'; 
+            div.innerHTML = `<div class="mode-btn" id="mode-normal">👻 ПРЯТКИ-ДОГОНЯЛКИ<br><small>от 2 до 10 игроков</small></div><div class="mode-btn" id="mode-infection">🧟 ПРЯТКИ-ЗАРАЖЕНИЕ<br><small>от 4 до 10 игроков</small></div>`; 
+            showDialog('Выберите режим', div.outerHTML, [{ text: 'Отмена', value: null }]).then(res => { if (res === null) return; createRoomWithMode(res === 'mode-normal' ? 'normal' : 'infection'); }); 
+            setTimeout(() => { 
+                document.getElementById('mode-normal')?.addEventListener('click', () => { document.getElementById('custom-dialog').classList.remove('active'); createRoomWithMode('normal'); }); 
+                document.getElementById('mode-infection')?.addEventListener('click', () => { document.getElementById('custom-dialog').classList.remove('active'); createRoomWithMode('infection'); }); 
+            }, 100); 
+        }
+        async function createRoomWithMode(mode) { 
+            if (isCreatingRoom) return; 
+            isCreatingRoom = true; 
+            playButtonSound(); 
+            let roomId = currentUser.nickname; 
+            let existing = await db.collection(ROOMS).doc(roomId).get(); 
+            if (existing.exists) { 
+                const data = existing.data();
+                if (data.players.length === 0) {
+                    await existing.ref.delete();
+                } else {
+                    errorFeedback(); alert('Комната с таким ником уже существует!'); isCreatingRoom = false; return;
+                }
+            }
+            let roomData = { status: 'waiting', createdAt: Date.now(), players: [currentUser.nickname], ready: [], mode: mode, minPlayers: mode === 'infection' ? 4 : 2, maxPlayers: 10, host: currentUser.nickname, gameStarted: false, countdownActive: false };
+            await db.collection(ROOMS).doc(roomId).set(roomData);
+            isCreatingRoom = false;
+            joinRoom(roomId);
+        }
         const showRoomList = withCooldown(async function() { playButtonSound(); await transitionTo('rooms', 'submenu'); loadRooms(); });
         const hideRooms = withCooldown(async function() { playButtonSound(); await transitionTo('menu', 'menu'); });
-        async function loadRooms() { let snap = await db.collection(ROOMS).where('status', '==', 'waiting').get(); let cont = document.getElementById('rooms-list'); cont.innerHTML = ''; let rooms = snap.docs.filter(d => d.data().players?.length > 0); if (rooms.length === 0) { cont.innerHTML = '<div style="text-align:center;padding:40px;">Нет комнат<br>Создайте свою!</div>'; return; } rooms.forEach(doc => { let d = doc.data(); cont.innerHTML += `<div class="room-item" onclick="joinRoom('${doc.id}')"><div><div style="font-size:16px;">${doc.id.substr(-8)}</div><div>${d.mode === 'normal' ? '👻 Прятки' : '🧟 Заражение'}</div><div>👑 ${d.host}</div></div><div>${d.players.length}/${d.maxPlayers}<br>${d.players.length >= d.minPlayers ? '✅' : '⏳'}</div></div>`; }); }
-        const joinRoom = withCooldown(async function(roomId) { playButtonSound(); let room = await db.collection(ROOMS).doc(roomId).get(); if (!room.exists) return alert('Комната не найдена'); let data = room.data(); if (data.players.length >= data.maxPlayers) return alert('Комната заполнена'); await db.collection(ROOMS).doc(roomId).update({ players: firebase.firestore.FieldValue.arrayUnion(currentUser.nickname) }); currentRoomId = roomId; await transitionTo('room', 'room'); listenRoom(roomId); });
-        function listenRoom(roomId) { if (roomListener) roomListener(); roomListener = db.collection(ROOMS).doc(roomId).onSnapshot(async doc => { if (!doc.exists) { alert('Комната удалена'); await leaveRoom(); return; } currentRoomData = doc.data(); updateRoomUI(); if (currentRoomData.players.length === 0) await doc.ref.delete(); if (currentRoomData.players.length === 1 && (Date.now() - currentRoomData.createdAt) > 300000) { await doc.ref.delete(); if (currentRoomId === roomId) await leaveRoom(); } manageCountdown(); }); }
+        async function loadRooms() { let snap = await db.collection(ROOMS).where('status', '==', 'waiting').get(); let cont = document.getElementById('rooms-list'); cont.innerHTML = ''; let rooms = snap.docs.filter(d => d.data().players?.length > 0); if (rooms.length === 0) { cont.innerHTML = '<div style="text-align:center;padding:40px;">Нет комнат<br>Создайте свою!</div>'; return; } rooms.forEach(doc => { let d = doc.data(); cont.innerHTML += `<div class="room-item" onclick="joinRoom('${doc.id}')"><div><div style="font-size:calc(16px * var(--font-scale, 1));">${doc.id}</div><div>${d.mode === 'normal' ? '👻 Прятки' : '🧟 Заражение'}</div><div>👑 ${d.host}</div></div><div>${d.players.length}/${d.maxPlayers}<br>${d.players.length >= d.minPlayers ? '✅' : '⏳'}</div></div>`; }); }
+        function searchRooms() { let query = document.getElementById('room-search').value.trim(); if (!query) { loadRooms(); return; } db.collection(ROOMS).doc(query).get().then(doc => { let cont = document.getElementById('rooms-list'); cont.innerHTML = ''; if (doc.exists && doc.data().status === 'waiting') { let d = doc.data(); cont.innerHTML += `<div class="room-item" onclick="joinRoom('${doc.id}')"><div><div style="font-size:calc(16px * var(--font-scale, 1));">${doc.id}</div><div>${d.mode === 'normal' ? '👻 Прятки' : '🧟 Заражение'}</div><div>👑 ${d.host}</div></div><div>${d.players.length}/${d.maxPlayers}<br>${d.players.length >= d.minPlayers ? '✅' : '⏳'}</div></div>`; } else { cont.innerHTML = '<div style="text-align:center;padding:40px;">Комната не найдена</div>'; } }); }
+        function clearSearch() { document.getElementById('room-search').value = ''; loadRooms(); }
+        const joinRoom = withCooldown(async function(roomId) { playButtonSound(); let room = await db.collection(ROOMS).doc(roomId).get(); if (!room.exists) return errorFeedback(), alert('Комната не найдена'); let data = room.data(); if (data.players.length >= data.maxPlayers) return errorFeedback(), alert('Комната заполнена'); await db.collection(ROOMS).doc(roomId).update({ players: firebase.firestore.FieldValue.arrayUnion(currentUser.nickname) }); currentRoomId = roomId; localStorage.setItem('currentRoomId', roomId); await transitionTo('room', 'room'); listenRoom(roomId); });
+        function listenRoom(roomId) { if (roomListener) roomListener(); roomListener = db.collection(ROOMS).doc(roomId).onSnapshot(async doc => { if (!doc.exists) { alert('Комната удалена'); await leaveRoom(); return; } currentRoomData = doc.data(); updateRoomUI(); if (currentRoomData.players.length === 0) { 
+                const chatRef = db.collection(CHATS).doc(roomId);
+                const messagesSnapshot = await chatRef.collection('messages').get();
+                const batch = db.batch();
+                messagesSnapshot.forEach(msg => batch.delete(msg.ref));
+                await batch.commit();
+                await chatRef.delete();
+                await doc.ref.delete(); 
+                if (currentRoomId === roomId) await leaveRoom(); 
+            } 
+            // Удаление при бездействии 5 минут
+            if (currentRoomData.players.length === 1 && (Date.now() - currentRoomData.createdAt) > 300000) {
+                alert('Ожидание истекло, комната удалена');
+                await doc.ref.delete();
+                if (currentRoomId === roomId) await leaveRoom();
+            }
+            manageCountdown(); 
+        }); }
         function manageCountdown() { let allReady = currentRoomData.ready?.length === currentRoomData.players.length && currentRoomData.players.length >= currentRoomData.minPlayers; if (allReady && !countdownInterval && currentRoomData.status === 'waiting' && !currentRoomData.countdownActive) { startCountdown(); } else if ((!allReady || currentRoomData.status !== 'waiting') && countdownInterval) { stopCountdown(); } }
         function startCountdown() { let seconds = 15; let timerDiv = document.getElementById('countdown-timer'); timerDiv.textContent = `Игра начнется через ${seconds} сек...`; db.collection(ROOMS).doc(currentRoomId).update({ countdownActive: true }); countdownInterval = setInterval(async () => { seconds--; timerDiv.textContent = `Игра начнется через ${seconds} сек...`; if (seconds <= 0) { clearInterval(countdownInterval); countdownInterval = null; timerDiv.textContent = ''; await db.collection(ROOMS).doc(currentRoomId).update({ status: 'playing', countdownActive: false }); } }, 1000); }
         function stopCountdown() { if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; document.getElementById('countdown-timer').textContent = ''; db.collection(ROOMS).doc(currentRoomId).update({ countdownActive: false }); } }
-        function updateRoomUI() { if (!currentRoomData) return; let d = currentRoomData; document.getElementById('room-name').textContent = `Комната ${currentRoomId.substr(-6)}`; document.getElementById('room-mode').textContent = d.mode === 'normal' ? '👻 Прятки-догонялки' : '🧟 Прятки-заражение'; document.getElementById('room-players').textContent = `${d.players.length}/${d.maxPlayers}`; document.getElementById('room-host').textContent = `👑 ${d.host}`; let list = document.getElementById('room-players-list'); list.innerHTML = ''; d.players.forEach(p => { let ready = d.ready?.includes(p); list.innerHTML += `<div class="player-slot ${ready ? 'ready' : ''}"><div class="avatar">${p.charAt(0)}</div><div>${p}</div>${ready ? '✅' : '⏳'}</div>`; }); let rb = document.getElementById('ready-btn'); if (d.ready?.includes(currentUser.nickname)) { rb.textContent = 'ГОТОВ ✓'; rb.classList.add('ready'); } else { rb.textContent = 'ГОТОВ'; rb.classList.remove('ready'); } if (d.status === 'playing') startGame(); }
+        function updateRoomUI() { if (!currentRoomData) return; let d = currentRoomData; document.getElementById('room-name').textContent = `Комната ${currentRoomId}`; document.getElementById('room-mode').textContent = d.mode === 'normal' ? '👻 Прятки-догонялки' : '🧟 Прятки-заражение'; document.getElementById('room-players').textContent = `${d.players.length}/${d.maxPlayers}`; document.getElementById('room-host').textContent = `👑 ${d.host}`; let list = document.getElementById('room-players-list'); list.innerHTML = ''; d.players.forEach(p => { let ready = d.ready?.includes(p); list.innerHTML += `<div class="player-slot ${ready ? 'ready' : ''}"><div class="avatar">${p.charAt(0)}</div><div>${p}</div>${ready ? '✅' : '⏳'}</div>`; }); let rb = document.getElementById('ready-btn'); if (d.ready?.includes(currentUser.nickname)) { rb.textContent = 'ГОТОВ ✓'; rb.classList.add('ready'); } else { rb.textContent = 'ГОТОВ'; rb.classList.remove('ready'); } if (d.status === 'playing') startGame(); }
         const toggleReady = withCooldown(async function() { playButtonSound(); if (!currentRoomData) return; if (currentRoomData.ready?.includes(currentUser.nickname)) await db.collection(ROOMS).doc(currentRoomId).update({ ready: firebase.firestore.FieldValue.arrayRemove(currentUser.nickname) }); else await db.collection(ROOMS).doc(currentRoomId).update({ ready: firebase.firestore.FieldValue.arrayUnion(currentUser.nickname) }); });
-        const leaveRoom = withCooldown(async function() { playButtonSound(); stopCountdown(); if (roomListener) roomListener(); if (currentRoomId) { await db.collection(ROOMS).doc(currentRoomId).update({ players: firebase.firestore.FieldValue.arrayRemove(currentUser.nickname), ready: firebase.firestore.FieldValue.arrayRemove(currentUser.nickname) }); } await transitionTo('rooms', 'menu'); currentRoomId = null; });
-        function copyRoomId() { navigator.clipboard?.writeText(currentRoomId); alert('Код скопирован'); }
-
-        // ================== 2D КАРТА И ИГРОВАЯ ЛОГИКА (полностью идентична предыдущей версии) ==================
-        function buildMap() { /* ... */ }
-        function drawMap() { /* ... */ }
-        function drawPlayer(x, y, color, name, isSeekerFlag) { /* ... */ }
-        function render() { /* ... */ }
-        function checkCollision(x, y) { /* ... */ }
-        function lineOfSight(x1, y1, x2, y2) { /* ... */ }
-        function startGame() { /* ... */ }
-        function startSeekTimer() { /* ... */ }
-        function updateChase(visible) { /* ... */ }
-        function endGame(seekerWon) { /* ... */ }
-        function closeResults() { /* ... */ }
-        function initNetwork() { /* ... */ }
-        const leaveGame = withCooldown(async function() { playButtonSound(); gameActive = false; if (gameLoop) clearInterval(gameLoop); if (currentRoomId) { rtdb.ref(`game_rooms/${currentRoomId}/players/${myPlayerId}`).remove(); await db.collection(ROOMS).doc(currentRoomId).update({ status: 'waiting', countdownActive: false }); } await transitionTo('menu', 'menu'); });
-
-        // Вставка полных функций карты и игры (опущены для краткости, они такие же как в предыдущей версии)
-        // Для экономии места здесь используется placeholder, но в реальном коде они должны быть полностью скопированы.
-        // В данном ответе они не включены из-за ограничения длины, но они полностью идентичны последней рабочей версии.
-        // Убедитесь, что в финальном файле они присутствуют.
-
-        // ================== УПРАВЛЕНИЕ ДЖОЙСТИКОМ ==================
+        const leaveRoom = withCooldown(async function() { playButtonSound(); if (!await confirm('Вы уверены, что хотите выйти из комнаты?')) return; stopCountdown(); if (roomListener) roomListener(); if (currentRoomId) { await db.collection(ROOMS).doc(currentRoomId).update({ players: firebase.firestore.FieldValue.arrayRemove(currentUser.nickname), ready: firebase.firestore.FieldValue.arrayRemove(currentUser.nickname) }); localStorage.removeItem('currentRoomId'); } await transitionTo('rooms', 'menu'); currentRoomId = null; });
+        function copyRoomId() { navigator.clipboard?.writeText(currentRoomId); alert('Код комнаты скопирован'); }
+        
+        // === Игровая логика ===
+        function startGame() {
+            if (gameActive) return;
+            buildMap();
+            canvas = document.getElementById('game-canvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            cellSize = Math.min(canvas.width / mapWidth, canvas.height / mapHeight);
+            let playersList = currentRoomData.players;
+            let seekerIndex = Math.floor(Math.random() * playersList.length);
+            let seekerName = playersList[seekerIndex];
+            isSeeker = (seekerName === currentUser.nickname);
+            // начальная позиция
+            for (let y = 0; y < mapHeight; y++) {
+                for (let x = 0; x < mapWidth; x++) {
+                    if (map[y][x] === 0) {
+                        myPos = { x: x * cellSize + cellSize / 2, y: y * cellSize + cellSize / 2 };
+                        targetPos = { ...myPos };
+                        break;
+                    }
+                }
+            }
+            caughtPlayers = [];
+            initNetwork();
+            gameActive = true; gamePhase = 'hide'; hideTimer = 30;
+            document.getElementById('game-message').textContent = isSeeker ? '🔴 ВЫ ВОДА! Ждите 30 секунд...' : '🟢 ПРЯЧЬТЕСЬ! 30 секунд';
+            document.getElementById('game-timer').textContent = `Спрятаться: ${hideTimer}`;
+            switchMusic(null, 300, 0);
+            let hideInterval = setInterval(() => { if (!gameActive || gamePhase !== 'hide') { clearInterval(hideInterval); return; } hideTimer--; document.getElementById('game-timer').textContent = `Спрятаться: ${hideTimer}`; if (hideTimer <= 0) { clearInterval(hideInterval); gamePhase = 'seek'; seekTimer = 270; document.getElementById('game-message').textContent = isSeeker ? '🔍 ИЩИТЕ ИГРОКОВ!' : '🏃 УБЕГАЙТЕ!'; document.getElementById('game-timer').textContent = `Время поиска: 4:30`; if (!isSeeker) switchMusic(seekMusic, 500, 1000); else switchMusic(null, 500, 0); startSeekTimer(); } }, 1000);
+        }
+        function startSeekTimer() { let seekInterval = setInterval(() => { if (!gameActive || gamePhase !== 'seek') { clearInterval(seekInterval); return; } seekTimer--; let m = Math.floor(seekTimer / 60), s = seekTimer % 60; document.getElementById('game-timer').textContent = `${m}:${s < 10 ? '0' + s : s}`; if (seekTimer <= 0) { clearInterval(seekInterval); endGame(false); } }, 1000); }
+        function updateChase(visible) { if (gamePhase !== 'seek' || !isSeeker) return; if (visible && !chaseActive) { chaseActive = true; if (chaseTimeout) clearTimeout(chaseTimeout); if (currentMusic === seekMusic) { fadeAudioSteps(seekMusic, 0, 300, 10); setTimeout(() => { chaseMusic.currentTime = 0; chaseMusic.play().catch(() => {}); fadeAudioSteps(chaseMusic, 0.7, 300, 10); currentMusic = chaseMusic; }, 300); } } else if (!visible && chaseActive) { if (chaseTimeout) clearTimeout(chaseTimeout); chaseTimeout = setTimeout(() => { chaseActive = false; if (currentMusic === chaseMusic) { fadeAudioSteps(chaseMusic, 0, 300, 10); setTimeout(() => { seekMusic.currentTime = 0; seekMusic.play().catch(() => {}); fadeAudioSteps(seekMusic, 0.7, 300, 10); currentMusic = seekMusic; }, 300); } }, 5000); } }
+        function endGame(seekerWon) {
+            if (!gameActive) return;
+            gameActive = false;
+            if (gameLoop) clearInterval(gameLoop);
+            if (currentMusic) fadeAudioSteps(currentMusic, 0, 500, 10);
+            setTimeout(() => {
+                let rm = seekerWon ? winMusic : loseMusic;
+                rm.play().catch(() => {});
+                fadeAudioSteps(rm, 0.7, 500, 10);
+                setTimeout(() => {
+                    fadeAudioSteps(rm, 0, 500, 10);
+                    setTimeout(() => {
+                        resultsMusic.play().catch(() => {});
+                        fadeAudioSteps(resultsMusic, 0.7, 500, 10);
+                        let timeSpent = 270 - seekTimer;
+                        let reward = seekerWon ? 50 : 30;
+                        document.getElementById('stats').innerHTML = `<div style="font-size:calc(28px * var(--font-scale, 1)); margin-bottom:15px;">${seekerWon ? '🏆 ВОДА ПОБЕДИЛ!' : '✨ ПРЯТКИ ПОБЕДИЛИ!'}</div><div>💰 Монеты: +${reward}</div><div>⏱️ Время игры: ${Math.floor(timeSpent / 60)}:${timeSpent % 60 < 10 ? '0' + (timeSpent % 60) : timeSpent % 60}</div><div>🎭 Роль: ${isSeeker ? 'Вода' : 'Прячущийся'}</div><div>🏃 Погоня была активна: ${chaseActive ? 'Да' : 'Нет'}</div><div>👻 Поймано: ${caughtPlayers.length}</div>`;
+                        document.getElementById('results-screen').classList.remove('hidden');
+                        setTimeout(() => { if (!document.getElementById('results-screen').classList.contains('hidden')) closeResults(); }, 60000);
+                    }, 500);
+                }, 4000);
+            }, 500);
+        }
+        function closeResults() { if (resultsMusic) fadeAudioSteps(resultsMusic, 0, 500, 10); document.getElementById('results-screen').classList.add('hidden'); transitionTo('menu', 'menu'); }
+        
+        function initNetwork() {
+            myPlayerId = currentUser.nickname;
+            let roomRef = rtdb.ref(`game_rooms/${currentRoomId}`);
+            let myRef = roomRef.child('players').child(myPlayerId);
+            myRef.set({ nickname: currentUser.nickname, x: myPos.x, y: myPos.y, skin: currentUser.skin || 'default', isSeeker: isSeeker, caught: false });
+            roomRef.child('players').on('value', (snap) => {
+                players = snap.val() || {};
+                render();
+                if (isSeeker && gamePhase === 'seek') {
+                    let visible = false;
+                    for (let id in players) {
+                        if (id === myPlayerId) continue;
+                        let p = players[id];
+                        if (p.caught) continue;
+                        if (lineOfSight(myPos.x, myPos.y, p.x, p.y)) {
+                            visible = true;
+                            if (Math.hypot(p.x - myPos.x, p.y - myPos.y) < cellSize * 0.8) {
+                                // поймали
+                                if (!caughtPlayers.includes(p.nickname)) {
+                                    caughtPlayers.push(p.nickname);
+                                    roomRef.child('players').child(id).update({ caught: true });
+                                    alert(`Вы поймали ${p.nickname}!`);
+                                    if (caughtPlayers.length === (Object.keys(players).length - 1)) {
+                                        endGame(true);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    updateChase(visible);
+                }
+                render();
+            });
+            gameLoop = setInterval(() => {
+                if (!gameActive) return;
+                if (joystickActive) {
+                    let newX = myPos.x + joystickVector.x * 4;
+                    let newY = myPos.y + joystickVector.y * 4;
+                    if (!checkCollision(newX, newY)) { myPos.x = newX; myPos.y = newY; }
+                }
+                myRef.update({ x: myPos.x, y: myPos.y });
+                render();
+            }, 100);
+        }
+        const leaveGame = withCooldown(async function() { playButtonSound(); if (!await confirm('Вы уверены, что хотите выйти из игры?')) return; gameActive = false; if (gameLoop) clearInterval(gameLoop); if (currentRoomId) { rtdb.ref(`game_rooms/${currentRoomId}/players/${myPlayerId}`).remove(); await db.collection(ROOMS).doc(currentRoomId).update({ status: 'waiting', countdownActive: false }); localStorage.removeItem('currentRoomId'); } await transitionTo('menu', 'menu'); });
+        
+        // === Восстановление состояния ===
+        async function restoreState() {
+            let savedRoom = localStorage.getItem('currentRoomId');
+            if (savedRoom) {
+                let roomDoc = await db.collection(ROOMS).doc(savedRoom).get();
+                if (roomDoc.exists && (roomDoc.data().status === 'waiting' || roomDoc.data().status === 'playing')) {
+                    currentRoomId = savedRoom;
+                    await transitionTo('room', 'room');
+                    listenRoom(currentRoomId);
+                } else { localStorage.removeItem('currentRoomId'); }
+            }
+        }
+        
+        // === Управление джойстиком ===
         let joystickDiv = document.getElementById('joystick'), thumb = document.getElementById('joystick-thumb'), joystickRect = joystickDiv.getBoundingClientRect();
         function updateJoystickRect() { joystickRect = joystickDiv.getBoundingClientRect(); }
         window.addEventListener('resize', updateJoystickRect); updateJoystickRect();
         joystickDiv.addEventListener('touchstart', handleJoystick); joystickDiv.addEventListener('touchmove', handleJoystick);
         joystickDiv.addEventListener('touchend', () => { joystickActive = false; thumb.style.transform = 'translate(-50%, -50%)'; joystickVector = { x: 0, y: 0 }; });
         function handleJoystick(e) { e.preventDefault(); let touch = e.touches[0]; let cx = joystickRect.left + joystickRect.width / 2, cy = joystickRect.top + joystickRect.height / 2; let dx = touch.clientX - cx, dy = touch.clientY - cy; let dist = Math.hypot(dx, dy); let maxD = joystickRect.width / 2; if (dist > maxD) { dx = dx / dist * maxD; dy = dy / dist * maxD; } thumb.style.transform = `translate(${dx}px, ${dy}px)`; joystickActive = true; joystickVector = { x: dx / maxD, y: dy / maxD }; }
-
-        // ================== НАСТРОЙКИ ==================
-        const showSettings = withCooldown(async function() { playButtonSound(); await transitionTo('settings', 'submenu'); });
-        const hideSettings = withCooldown(async function() { playButtonSound(); await transitionTo('menu', 'menu'); });
-        const showStream = withCooldown(async function() { playButtonSound(); await transitionTo('stream', 'submenu'); });
-        const hideStream = withCooldown(async function() { playButtonSound(); await transitionTo('menu', 'menu'); });
-        async function changePassword() { const old = await prompt('Старый пароль'); if (!old || old !== currentUser.password) return alert('Неверный пароль'); const np = await prompt('Новый пароль (латиница, ._-)'); if (!/^[a-zA-Z0-9._-]{1,20}$/.test(np)) return alert('Недопустимый пароль'); const cf = await prompt('Подтвердите'); if (np !== cf) return alert('Не совпадают'); currentUser.password = np; await db.collection(GAME_USERS).doc(currentUser.nickname).update({ password: np }); alert('Пароль изменён'); }
-        async function changeNickname() { const nn = await prompt('Новый никнейм'); if (!nn || nn.length > 20) return alert('Некорректный'); const ex = await db.collection(GAME_USERS).where('nickname', '==', nn).get(); if (!ex.empty) return alert('Занят'); const old = currentUser.nickname; await db.collection(GAME_USERS).doc(nn).set({ ...currentUser, nickname: nn }); await db.collection(GAME_USERS).doc(old).delete(); currentUser.nickname = nn; localStorage.setItem('hns_user', JSON.stringify(currentUser)); document.getElementById('account-nick').textContent = nn; alert('Никнейм изменён'); }
-        function logout() { confirm('Выйти?').then(r => { if (r) { localStorage.removeItem('hns_user'); location.reload(); } }); }
-        async function deleteAccount() { const pass = await prompt('Пароль'); if (pass !== currentUser.password) return alert('Неверный'); if (await confirm('Удалить навсегда?')) { await db.collection(GAME_USERS).doc(currentUser.nickname).delete(); localStorage.removeItem('hns_user'); location.reload(); } }
-
-        window.onload = () => { const saved = localStorage.getItem('hns_user'); if (saved) { currentUser = JSON.parse(saved); db.collection(GAME_USERS).doc(currentUser.nickname).get().then(doc => { if (doc.exists) { currentUser = doc.data(); currentUser.nickname = doc.id; completeLogin(); } else { localStorage.removeItem('hns_user'); location.reload(); } }); } };
+        
+        // === Магазин и настройки ===
+        const showShop = withCooldown(async function() { playButtonSound(); await transitionTo('shop', 'submenu'); });
+        const hideShop = withCooldown(async function() { playButtonSound(); await transitionTo('menu', 'menu'); });
+        const showSettings = withCooldown(async function() { playButtonSound(); loadSettingsUI(); await transitionTo('settings', 'submenu'); });
+        
+        document.getElementById('change-password-btn').onclick = async () => { playButtonSound(); const old = await prompt('Старый пароль'); if (!old || old !== currentUser.password) return errorFeedback(), alert('Неверный пароль'); const np = await prompt('Новый пароль (латиница, ._-)'); if (!/^[a-zA-Z0-9._-]{1,20}$/.test(np)) return errorFeedback(), alert('Недопустимый пароль'); const cf = await prompt('Подтвердите'); if (np !== cf) return errorFeedback(), alert('Не совпадают'); currentUser.password = np; await db.collection(GAME_USERS).doc(currentUser.nickname).update({ password: np }); alert('Пароль изменён'); };
+        document.getElementById('change-nickname-btn').onclick = async () => { playButtonSound(); const nn = await prompt('Новый никнейм'); if (!nn || nn.length > 20) return errorFeedback(), alert('Некорректный'); const ex = await db.collection(GAME_USERS).where('nickname', '==', nn).get(); if (!ex.empty) return errorFeedback(), alert('Занят'); const old = currentUser.nickname; await db.collection(GAME_USERS).doc(nn).set({ ...currentUser, nickname: nn }); await db.collection(GAME_USERS).doc(old).delete(); currentUser.nickname = nn; localStorage.setItem('hns_user', JSON.stringify(currentUser)); document.getElementById('account-nick').textContent = nn; alert('Никнейм изменён'); };
+        document.getElementById('logout-btn').onclick = () => { playButtonSound(); confirm('Выйти?').then(r => { if (r) { localStorage.removeItem('hns_user'); location.reload(); } }); };
+        document.getElementById('delete-account-btn').onclick = async () => { playButtonSound(); const pass = await prompt('Пароль'); if (pass !== currentUser.password) return errorFeedback(), alert('Неверный'); if (await confirm('Удалить навсегда?')) { await db.collection(GAME_USERS).doc(currentUser.nickname).delete(); localStorage.removeItem('hns_user'); location.reload(); } };
+        
+        window.onload = () => { loadSettingsFromStorage(); const saved = localStorage.getItem('hns_user'); if (saved) { currentUser = JSON.parse(saved); db.collection(GAME_USERS).doc(currentUser.nickname).get().then(doc => { if (doc.exists) { currentUser = doc.data(); currentUser.nickname = doc.id; completeLogin(); } else { localStorage.removeItem('hns_user'); location.reload(); } }); } };
     </script>
 </body>
 </html>
